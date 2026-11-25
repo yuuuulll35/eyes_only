@@ -86,6 +86,10 @@ function entry(item, { label = '' } = {}) {
   </li>`;
 }
 
+function threatWord(v) {
+  return v >= 70 ? '높음' : v >= 40 ? '주의' : '낮음';
+}
+
 function grade(v) {
   if (v == null) return '—';
   return v >= 80 ? 'A' : v >= 60 ? 'B' : v >= 40 ? 'C' : 'D';
@@ -153,7 +157,8 @@ function vIndex() {
   const incidents = list.reduce((n, f) => n + f.incidents.length, 0);
   const locked = list.reduce((n, f) => n + f.restricted.length + f.sealed.length, 0);
   const errata = list.reduce((n, f) => n + accuracy(f).error, 0);
-  const hot = subs.slice().sort((a, b) => b.files.length - a.files.length)[0];
+  const maxT = (x) => Math.max(-1, ...x.files.map((f) => f.threat ?? -1));
+  const hot = subs.slice().sort((a, b) => maxT(b) - maxT(a) || b.files.length - a.files.length)[0];
 
   const stats = [
     ['FILES', '보고서', list.length, '#/dossiers'],
@@ -195,11 +200,11 @@ function vIndex() {
 
   <section class="grid2">
     <div class="panel">
-      <h2 class="ph"><span>PRIORITY SUBJECT</span><em>집중 관찰 대상</em></h2>
+      <h2 class="ph"><span>PRIORITY SUBJECT</span><em>최고 위험도 대상</em></h2>
       ${hot ? `<a class="hot" href="${subjLink(hot.name)}">
         <span class="hot-g">${glyph(hot.name, { size: 96 })}</span>
         <span class="hot-t"><b>${esc(hot.name)}</b>
-        <span>관찰 보고서 ${hot.files.length}건 · 관찰자 ${new Set(hot.files.map(obsName)).size}명</span>
+        <span>위험도 ${maxT(hot) >= 0 ? maxT(hot) : '—'} · 관찰 보고서 ${hot.files.length}건</span>
         <span class="mono-dim">BIO-ID ${code(hot.name)}</span></span></a>` : '<p class="nodata">DATA NOT FOUND</p>'}
     </div>
     <div class="panel">
@@ -220,7 +225,7 @@ function vIndex() {
 function vSubjects() {
   const subs = subjects();
   if (!subs.length) return head('01 / SUBJECTS', 'SUBJECT REGISTRY', '조사 대상 인물 목록') + empty();
-  return `${head('01 / SUBJECTS', 'SUBJECT REGISTRY', '조사 대상 인물 목록', `<p class="vh-line">등록 대상 ${subs.length}명 · 같은 인물이라도 관찰자에 따라 기록이 다릅니다.</p>`)}
+  return `${head('01 / SUBJECTS', 'SUBJECT REGISTRY', '조사 대상 인물 목록', `<p class="vh-line">등록 대상 ${subs.length}명 · PC 곁의 인물과, 그 주변을 감시 중인 인물의 파일</p>`)}
   <section class="cards">
     ${subs.map((s) => {
       const facts = s.files.flatMap((f) => f.profile.filter((p) => p.st === 'fact')).slice(0, 2);
@@ -234,7 +239,7 @@ function vSubjects() {
           <b class="card-name">${esc(s.name)}</b>
           ${facts.map((p) => `<span class="card-f"><em>${esc(p.label)}</em> ${body(p.text, p.st)}</span>`).join('')}
           <span class="card-obs">관찰자: ${obs.map(esc).join(', ')}</span>
-          <span class="card-meta"><span>FILES ${String(s.files.length).padStart(2, '0')}</span><span>평균 신뢰도 ${avg ?? '—'}</span></span>
+          <span class="card-meta"><span>FILES ${String(s.files.length).padStart(2, '0')}</span><span>위험도 ${Math.max(-1, ...s.files.map((f) => f.threat ?? -1)) >= 0 ? Math.max(...s.files.map((f) => f.threat ?? 0)) : '—'}</span><span>평균 신뢰도 ${avg ?? '—'}</span></span>
         </span>
       </a>`;
     }).join('')}
@@ -336,10 +341,12 @@ function vDossier(f, { external = false } = {}) {
         <p class="d-mode">${modeChip(f.mode)} <span>${m.name}</span></p>
         <h1 class="d-title" tabindex="-1">${esc(f.title || '무제 보고서')}</h1>
         <p class="d-route"><span class="who">${esc(obsName(f))}</span><span class="arrow" aria-hidden="true">──▶</span><span class="who tgt">${esc(f.subject)}</span></p>
+        <p class="d-ctx">${f.mode === 2 ? `감시 범위: <b>${esc(f.pc || 'PC')}</b>의 주변` : `보호 대상: <b>${esc(f.pc || 'PC')}</b> · 대상은 그 곁의 인물`}</p>
         <p class="d-sub">관찰자 신분: ${esc(f.observer?.rel || '미상')} · 등록 ${esc(fmtDate(f.at))}</p>
+        ${f.threat != null ? `<p class="d-threat"><span>THREAT</span>${bar(f.threat, 'threat')}<b>${f.threat}</b><em>${threatWord(f.threat)}</em>${f.threatWhy ? `<small>${esc(f.threatWhy)}</small>` : ''}</p>` : ''}
         ${f.trigger ? `<p class="d-trig">⚠ 사건 「${esc(f.trigger)}」 발생에 따라 추가된 보고서</p>` : ''}
       </div>
-      <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>CLASSIFIED · ${grade(f.trust)}</span></div>
+      <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>${f.threat != null ? `THREAT ${f.threat}` : `CLASSIFIED · ${grade(f.trust)}`}</span></div>
     </header>
 
     <div class="d-tools">
@@ -355,6 +362,8 @@ function vDossier(f, { external = false } = {}) {
         <p class="mono-dim">BIO-ID ${code(f.subject)}</p>
         <dl class="id-dl">
           <dt>OBSERVER</dt><dd>${esc(obsName(f))}</dd>
+          <dt>${f.mode === 2 ? 'WATCHING' : 'NEAR'}</dt><dd>${esc(f.pc || 'PC')}</dd>
+          <dt>THREAT</dt><dd>${f.threat ?? '—'} / 100</dd>
           <dt>TRUST</dt><dd>${f.trust ?? '—'} / 100</dd>
           <dt>ACCURACY</dt><dd>${acc.pct ?? '—'}%</dd>
           <dt>STATUS</dt><dd>${f.mode === 2 ? 'UNDER SURVEILLANCE' : 'OBSERVED'}</dd>
@@ -519,12 +528,15 @@ function vIncidents() {
 
 /* ---------- intake ---------- */
 
-const draft = { mode: 1, observer: '', subject: '', trigger: '', answer: '' };
+const draft = { mode: 1, observer: '', subject: '', pc: '', trigger: '', answer: '' };
 try { Object.assign(draft, JSON.parse(store.pref.get('draft') || '{}')); } catch { /* ignore */ }
 const saveDraft = () => store.pref.set('draft', JSON.stringify(draft));
 
 function vIntake(q, { first = false } = {}) {
-  if (q.get('mode')) draft.mode = q.get('mode') === '2' ? 2 : 1;
+  if (q.get('mode') && vIntake.applied !== location.hash) {
+    draft.mode = q.get('mode') === '2' ? 2 : 1;
+    vIntake.applied = location.hash;
+  }
   const wantTrig = q.get('trigger') === '1';
   const m = draft.mode;
   const openOpt = wantTrig || !!(draft.observer || draft.subject || draft.trigger);
@@ -532,7 +544,7 @@ function vIntake(q, { first = false } = {}) {
     ? `<header class="vh first-h">
         <p class="vh-no">CONFIDENTIAL PERSONNEL OBSERVATION DATABASE</p>
         <h1 class="vh-title" tabindex="-1"><span class="en">EYES ONLY</span><span class="ko">비밀 인물 조사 및 관찰 기록 아카이브</span></h1>
-        <p class="vh-line">누가 누구를 관찰했느냐에 따라 같은 인물이 전혀 다르게 기록됩니다.</p>
+        <p class="vh-line">그 사람 곁에 누가 있는지 지켜보는 눈. 그리고 그 눈을 지켜보는 또 다른 눈.</p>
       </header>`
     : head('-- / INTAKE', 'NEW OBSERVATION FILE', '새 관찰 보고서 접수');
   return `${top}
@@ -550,8 +562,11 @@ function vIntake(q, { first = false } = {}) {
       <details class="opt"${openOpt ? ' open' : ''}>
         <summary>세부 설정 <em>선택 · 비워 두면 기본값</em></summary>
         <div class="fields">
-          <label class="fld" data-only="1"${m === 2 ? ' hidden' : ''}><span>관찰자 <em>비우면 NPC</em></span><input name="observer" maxlength="20" value="${esc(draft.observer)}" placeholder="예: 차도현"></label>
-          <label class="fld"><span>관찰 대상 <em>비우면 ${m === 2 ? 'NPC' : 'PC'}</em></span><input name="subject" maxlength="20" value="${esc(draft.subject)}" placeholder="${m === 2 ? '예: 차도현' : '예: 윤해리'}"></label>
+          ${m === 1
+            ? `<label class="fld"><span>관찰자 (NPC) <em>비우면 NPC</em></span><input name="observer" maxlength="20" value="${esc(draft.observer)}" placeholder="예: 차도현"></label>
+          <label class="fld"><span>관찰 대상 (PC 주변 인물) <em>비우면 서사에서 고름</em></span><input name="subject" maxlength="20" value="${esc(draft.subject)}" placeholder="예: 강지안"></label>`
+            : `<label class="fld"><span>감시 중인 NPC <em>비우면 NPC</em></span><input name="subject" maxlength="20" value="${esc(draft.subject)}" placeholder="예: 차도현"></label>`}
+          <label class="fld"><span>PC 이름 <em>비우면 PC</em></span><input name="pc" maxlength="20" value="${esc(draft.pc)}" placeholder="예: 윤해리"></label>
           <label class="fld wide"><span>계기 사건 <em>특정 사건 이후의 추가 보고서로 만들 때</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
         </div>
       </details>
@@ -599,11 +614,12 @@ function bindIntake() {
   form.addEventListener('input', (e) => {
     const t = e.target;
     if (t.name === 'mode') {
-      draft.mode = Number(t.value) === 2 ? 2 : 1;
-      form.querySelector('[data-only="1"]').hidden = draft.mode === 2;
-      const s = form.querySelector('input[name="subject"]');
-      s.placeholder = draft.mode === 2 ? '예: 차도현' : '예: 윤해리';
-      s.closest('.fld').querySelector('em').textContent = `비우면 ${draft.mode === 2 ? 'NPC' : 'PC'}`;
+      const next = Number(t.value) === 2 ? 2 : 1;
+      if (next !== draft.mode) { draft.mode = next; draft.subject = ''; }
+      saveDraft();
+      const y = window.scrollY;
+      route().then(() => { window.scrollTo(0, y); $(`input[name="mode"][value="${next}"]`)?.focus({ preventScroll: true }); });
+      return;
     } else if (t.name in draft) {
       draft[t.name] = t.value;
     }
@@ -649,7 +665,8 @@ function asText(f) {
   const L = [];
   const stw = (s) => (s === 'error' ? (audit ? '오인' : '확인') : ST[s]?.tag || '추정');
   const row = (k, i, extra = '') => L.push(`${k}: ${extra}${i.text} · ${stw(i.st)}${audit && i.st === 'error' && i.real ? ` · 실제: ${i.real}` : ''}`);
-  L.push(`[EYES ONLY] ${f.no}`, `모드: ${f.mode === 2 ? '02' : '01'}`, `관찰자: ${obsName(f)}${f.observer?.rel ? ' · ' + f.observer.rel : ''}`, `대상: ${f.subject}`, `제목: ${f.title}`);
+  L.push(`[EYES ONLY] ${f.no}`, `모드: ${f.mode === 2 ? '02' : '01'}`, `관찰자: ${obsName(f)}${f.observer?.rel ? ' · ' + f.observer.rel : ''}`, `대상: ${f.subject}`, `PC: ${f.pc || 'PC'}`, `제목: ${f.title}`);
+  if (f.threat != null) L.push(`위험도: ${f.threat}${f.threatWhy ? ' · ' + f.threatWhy : ''}`);
   if (f.trigger) L.push(`계기 사건: ${f.trigger}`);
   f.profile.forEach((i) => row('신상', i, `${i.label} · `));
   f.look.forEach((i) => row('외관', i));

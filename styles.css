@@ -576,3 +576,14 @@ button { background: none; border: 0; padding: 0; cursor: pointer; text-shadow: 
   .flow { grid-template-columns: 1fr; gap: 6px; }
   .flow-arrow { justify-self: center; transform: rotate(90deg); line-height: 1; }
 }
+
+/* ---------- PC context / threat ---------- */
+.d-ctx { font-size: 14px; color: var(--ink2); }
+.d-ctx b { color: var(--ink); }
+.d-threat { display: grid; grid-template-columns: auto minmax(80px, 220px) auto auto; justify-content: start; align-items: center; gap: 2px 10px; margin-top: 2px; }
+.d-threat span { font-family: var(--px); font-size: 18px; color: var(--red); letter-spacing: .08em; }
+.d-threat b { font-family: var(--px); font-weight: 400; font-size: 22px; color: var(--red); }
+.d-threat em { font-style: normal; font-size: 13px; color: var(--red); }
+.d-threat small { grid-column: 1 / -1; font-size: 13px; color: var(--dim); }
+.meter.threat { border-color: rgba(255, 97, 87, .5); }
+.meter.threat i { background: repeating-linear-gradient(90deg, var(--red) 0 5px, transparent 5px 7px); box-shadow: 0 0 4px rgba(255, 97, 87, .4); }

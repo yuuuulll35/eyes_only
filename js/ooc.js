@@ -2,7 +2,7 @@ const HEAD = '[OOC · EYES ONLY 관찰 기록] 잠시 역할극 중단. NPC/PC �
 
 const RULES = `[작성 규칙]
 - 공식 기록은 건조한 데이터베이스 문체(~함, ~임, ~로 보임). 열람 제한과 코멘트에서만 관찰자 본인의 말투로 속내가 드러난다.
-- 관찰자의 성격·관점·편견이 평가에 묻어나게 쓴다. 같은 대상이라도 관찰자가 다르면 평가가 달라진다.
+- 관찰자의 성격·경계심·편견이 평가에 묻어나게 쓴다.
 - 항목 끝에 확인(서사에서 직접 본 사실), 추정(관찰자의 해석), 오인(관찰자가 잘못 안 것) 중 하나를 붙인다. 오인은 '실제: 사실'을 덧붙이고 1~2개 넣는다.
 - 설정과 서사에 없는 정보는 지어내지 않고 DATA NOT FOUND로 쓴다. PC의 대사와 속마음은 지어내지 않는다.
 - 한 항목은 50자 이내. 표로 만들지 않는다.`;
@@ -11,14 +11,16 @@ const FORMAT = `[출력] 역할극 서술 없이 코드블록 하나에 아래 �
 모드: {MODE}
 관찰자: 이름 · 대상과의 관계
 대상: 이름
+PC: 이름
 제목: 보고서 제목 20자 이내
+위험도: 0~100 · 관찰자가 본 위험 근거
 신상: 항목 · 내용 · 확인 (4줄)
 외관: 식별 특징 · 확인 (3줄)
 성격: 행동 양식 · 추정 (3줄)
 선호: 내용 · 확인 (2줄)
 기피: 내용 · 추정 (2줄)
-관계: 인물 · 관계 분석 · 추정 (2줄)
-관찰: 일시 · 장소 · 일상 관찰 기록 (3줄)
+관계: 인물 · 관계 분석 · 추정 (2줄, 첫 줄은 PC)
+관찰: 일시 · 장소 · 관찰 기록 (3줄)
 사건: 사건명 · 경위와 결과 (2줄)
 심리: 성향 2~6자 · 0~100 · 근거 (4줄)
 소견: 종합 소견 2문장
@@ -28,31 +30,33 @@ const FORMAT = `[출력] 역할극 서술 없이 코드블록 하나에 아래 �
 코멘트: 관찰자의 개인 코멘트 1~2문장`;
 
 export const MODES = {
-  1: { code: 'MODE 01', name: "OBSERVER'S RECORD", ko: '관찰자의 기록', desc: 'NPC가 주변 인물을 관찰하고 쓴 보고서' },
-  2: { code: 'MODE 02', name: 'SUBJECT UNDER SURVEILLANCE', ko: '감시 대상', desc: '정체불명의 제3자가 NPC를 관찰하고 쓴 보고서' },
+  1: { code: 'MODE 01', name: "OBSERVER'S RECORD", ko: '관찰자의 기록', desc: 'NPC가 PC 곁의 인물을 경계하며 쓴 관찰 기록' },
+  2: { code: 'MODE 02', name: 'SUBJECT UNDER SURVEILLANCE', ko: '감시 대상', desc: 'PC 주변을 감시하듯 맴도는 NPC를 제3자가 지켜보며 쓴 기록' },
 };
 
 function josa(word, a, b) {
   const c = word.charCodeAt(word.length - 1);
   if (c >= 0xac00 && c <= 0xd7a3) return word + ((c - 0xac00) % 28 ? a : b);
-  if (/^(?:N?PC)$/.test(word)) return word + (a === '을' ? '를' : '가');
+  if (/^(?:N?PC)$/.test(word)) return word + ({ 을: '를', 이: '가', 은: '는', 과: '와' }[a] || b);
   return `${word}${a}(${b})`;
 }
 
 const tidyName = (s) => String(s || '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
-export function buildPrompt({ mode = 1, observer = '', subject = '', trigger = '' } = {}) {
+export function buildPrompt({ mode = 1, observer = '', subject = '', pc = '', trigger = '' } = {}) {
   const ob = tidyName(observer);
   const sb = tidyName(subject);
+  const P = tidyName(pc) || 'PC';
   const tr = tidyName(trigger);
   let brief;
   if (mode === 2) {
-    const who = sb || 'NPC';
-    brief = `정체불명의 제3자가 ${josa(who, '을', '를')} 몰래 감시해 쓴 기밀 조사 보고서를 만든다. 관찰자는 정체를 밝히지 않고 코드명만 쓴다. ${who}의 일상과 행동 패턴, 주변 관계, 수상한 습관을 추적하고 추측한다.`;
+    const n = sb || 'NPC';
+    brief = `정체불명의 제3자가 ${josa(n, '을', '를')} 지켜보며 쓴 기밀 조사 보고서를 만든다. ${josa(n, '은', '는')} ${P} 주변을 감시하듯 맴돌며 ${P} 곁의 인물들을 살피는 중이다. 관찰자는 정체를 밝히지 않고 코드명만 쓴다. ${n}의 감시 동선과 행동 패턴, ${josa(P, '과', '와')} 그 주변 인물을 대하는 태도, 그렇게까지 하는 이유를 추적하고 추측한다.`;
   } else {
     const o = ob || 'NPC';
-    const s = sb || 'PC';
-    brief = `${josa(o, '이', '가')} ${josa(s, '을', '를')} 오랫동안 지켜보며 쓴 기밀 조사 보고서를 만든다. ${o}의 시점과 말버릇, ${josa(s, '을', '를')} 향한 감정과 오해가 기록에 남는다.`;
+    const t = sb || '인물 한 명';
+    brief = `${josa(o, '이', '가')} ${P} 곁에 있는 ${josa(t, '을', '를')} 경계하며 몰래 관찰해 쓴 기밀 조사 보고서를 만든다. ${o}에게 대상은 ${P}에게 다가오는 잠재적 위협이다. 대상이 ${P}에게 어떤 존재인지, ${P}와의 거리·접촉·의도를 의심하는 눈으로 기록하고, ${o}의 경계심과 질투, 오해가 평가에 묻어난다.`;
+    if (!sb) brief += ` 대상은 서사에 나온 ${P}의 주변 인물 중 ${o} 본인이 아닌 사람으로 고른다.`;
   }
   if (tr) brief += ` 이 보고서는 '${tr}' 이후 새로 추가된 기록이다.`;
   return `${HEAD}\n${brief}\n\n${RULES}\n\n${FORMAT.replace('{MODE}', mode === 2 ? '02' : '01')}`;
@@ -64,6 +68,8 @@ const KEYS = [
   ['mode', /^모드$/],
   ['observer', /^관찰자$/],
   ['subject', /^(?:대상|조사\s*대상|관찰\s*대상)$/],
+  ['pc', /^(?:PC|보호\s*대상|감시\s*범위)$/i],
+  ['threat', /^(?:위험도|위협도|경계\s*등급)$/],
   ['title', /^(?:제목|보고서\s*제목)$/],
   ['profile', /^(?:신상|기본\s*신상(?:\s*정보)?)$/],
   ['look', /^(?:외관|외형|식별\s*특징)$/],
@@ -149,7 +155,7 @@ export function parse(text) {
   if (looksLikePrompt(raw)) return { error: 'OOC 요청문이 그대로 들어왔습니다. 채팅에서 받은 답을 복사해 붙여 주세요.' };
 
   const f = {
-    mode: 0, observer: { name: '', rel: '' }, subject: '', title: '',
+    mode: 0, observer: { name: '', rel: '' }, subject: '', pc: '', threat: null, threatWhy: '', title: '',
     profile: [], look: [], traits: [], likes: [], dislikes: [], relations: [],
     notes: [], incidents: [], psych: [], verdict: '', trust: null, trustWhy: '',
     restricted: [], sealed: [], comment: '',
@@ -174,6 +180,13 @@ export function parse(text) {
         break;
       }
       case 'subject': f.subject = clip(clean(value.split(SEP)[0]), LIMITS.name); break;
+      case 'pc': f.pc = clip(clean(value.split(SEP)[0]), LIMITS.name); break;
+      case 'threat': {
+        const p = value.split(SEP).map(clean).filter(Boolean);
+        f.threat = firstNum(p[0]);
+        f.threatWhy = clip(p.slice(1).join(' · '), L);
+        break;
+      }
       case 'title': f.title = clip(clean(value), LIMITS.title); break;
       case 'profile': {
         const { parts, st, real } = splitEntry(value);
