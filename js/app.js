@@ -523,14 +523,22 @@ const draft = { mode: 1, observer: '', subject: '', trigger: '', answer: '' };
 try { Object.assign(draft, JSON.parse(store.pref.get('draft') || '{}')); } catch { /* ignore */ }
 const saveDraft = () => store.pref.set('draft', JSON.stringify(draft));
 
-function vIntake(q) {
+function vIntake(q, { first = false } = {}) {
   if (q.get('mode')) draft.mode = q.get('mode') === '2' ? 2 : 1;
   const wantTrig = q.get('trigger') === '1';
   const m = draft.mode;
-  return `${head('-- / INTAKE', 'NEW OBSERVATION FILE', '새 관찰 보고서 접수')}
+  const openOpt = wantTrig || !!(draft.observer || draft.subject || draft.trigger);
+  const top = first
+    ? `<header class="vh first-h">
+        <p class="vh-no">CONFIDENTIAL PERSONNEL OBSERVATION DATABASE</p>
+        <h1 class="vh-title" tabindex="-1"><span class="en">EYES ONLY</span><span class="ko">비밀 인물 조사 및 관찰 기록 아카이브</span></h1>
+        <p class="vh-line">누가 누구를 관찰했느냐에 따라 같은 인물이 전혀 다르게 기록됩니다.</p>
+      </header>`
+    : head('-- / INTAKE', 'NEW OBSERVATION FILE', '새 관찰 보고서 접수');
+  return `${top}
   <form class="intake" id="intake" autocomplete="off">
     <section class="step">
-      <h2 class="sh"><span class="sh-no">01</span><span class="sh-en">SELECT OBSERVER</span><span class="sh-ko">관찰자 선택</span></h2>
+      <h2 class="sh"><span class="sh-no">01</span><span class="sh-en">SELECT OBSERVER</span><span class="sh-ko">관찰 방식 선택</span></h2>
       <div class="modes" role="radiogroup" aria-label="관찰 모드">
         ${[1, 2].map((k) => `<label class="mode-card pick">
           <input type="radio" name="mode" value="${k}"${m === k ? ' checked' : ''}>
@@ -539,39 +547,40 @@ function vIntake(q) {
           <span class="mc-desc">${MODES[k].desc}</span>
         </label>`).join('')}
       </div>
+      <details class="opt"${openOpt ? ' open' : ''}>
+        <summary>세부 설정 <em>선택 · 비워 두면 기본값</em></summary>
+        <div class="fields">
+          <label class="fld" data-only="1"${m === 2 ? ' hidden' : ''}><span>관찰자 <em>비우면 NPC</em></span><input name="observer" maxlength="20" value="${esc(draft.observer)}" placeholder="예: 차도현"></label>
+          <label class="fld"><span>관찰 대상 <em>비우면 ${m === 2 ? 'NPC' : 'PC'}</em></span><input name="subject" maxlength="20" value="${esc(draft.subject)}" placeholder="${m === 2 ? '예: 차도현' : '예: 윤해리'}"></label>
+          <label class="fld wide"><span>계기 사건 <em>특정 사건 이후의 추가 보고서로 만들 때</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
+        </div>
+      </details>
     </section>
 
     <section class="step">
-      <h2 class="sh"><span class="sh-no">02</span><span class="sh-en">TARGET</span><span class="sh-ko">관찰 대상 지정</span></h2>
-      <div class="fields">
-        <label class="fld" data-only="1"${m === 2 ? ' hidden' : ''}><span>관찰자 <em>비우면 NPC</em></span><input name="observer" maxlength="20" value="${esc(draft.observer)}" placeholder="예: 차도현"></label>
-        <label class="fld"><span>관찰 대상 <em>비우면 ${m === 2 ? 'NPC' : 'PC'}</em></span><input name="subject" maxlength="20" value="${esc(draft.subject)}" placeholder="${m === 2 ? '예: 차도현' : '예: 윤해리'}"></label>
-        <label class="fld wide"><span>계기 사건 <em>선택 · 특정 사건 이후의 추가 보고서로 만들 때</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
+      <h2 class="sh"><span class="sh-no">02</span><span class="sh-en">OOC</span><span class="sh-ko">요청문 보내고 답 받기</span></h2>
+      <p class="hint">OOC를 채팅에 보내고, 받은 답을 통째로 복사해 넣습니다.</p>
+      <div class="flow">
+        <button class="btn solid" type="button" data-act="copyprompt">OOC 복사</button>
+        <span class="flow-arrow" aria-hidden="true">──▶</span>
+        <button class="btn solid" type="button" data-act="pasteclip">답 붙여넣기</button>
       </div>
-    </section>
-
-    <section class="step">
-      <h2 class="sh"><span class="sh-no">03</span><span class="sh-en">TRANSMIT</span><span class="sh-ko">OOC 요청문 전송</span></h2>
-      <p class="hint">요청문을 복사해 롤플레잉 채팅에 보냅니다. 기존 설정과 서사를 근거로 보고서를 쓰라는 지시가 들어 있습니다.</p>
-      <div class="row-acts left">
-        <button class="btn solid" type="button" data-act="copyprompt">OOC 요청문 복사</button>
-        <button class="chip-btn" type="button" data-act="peek" aria-expanded="false">내용 보기</button>
+      <div class="manual" id="manual"${draft.answer ? '' : ' hidden'}>
+        <textarea name="answer" id="answer" rows="8" spellcheck="false" placeholder="모드: 01&#10;관찰자: 이름 · 대상과의 관계&#10;대상: 이름&#10;…" aria-label="채팅에서 받은 답">${esc(draft.answer)}</textarea>
+        <div class="row-acts left">
+          <button class="btn solid" type="submit">기록 등록</button>
+          <button class="chip-btn" type="button" data-act="clearans">지우기</button>
+        </div>
+      </div>
+      <p class="err" id="err" role="alert" hidden></p>
+      <p class="minor">
+        <button class="chip-btn" type="button" data-act="manual">직접 붙여넣기</button>
+        <button class="chip-btn" type="button" data-act="peek" aria-expanded="false">OOC 내용 보기</button>
         <span class="count" id="pLen"></span>
-      </div>
+      </p>
       <pre class="prompt" id="promptView" hidden></pre>
     </section>
-
-    <section class="step">
-      <h2 class="sh"><span class="sh-no">04</span><span class="sh-en">RECEIVE</span><span class="sh-ko">답변 접수</span></h2>
-      <p class="hint">채팅에서 받은 답을 통째로 붙여 넣습니다. 코드블록과 앞뒤 잡문이 섞여 있어도 읽습니다.</p>
-      <textarea name="answer" id="answer" rows="8" spellcheck="false" placeholder="모드: 01&#10;관찰자: 이름 · 대상과의 관계&#10;대상: 이름&#10;…">${esc(draft.answer)}</textarea>
-      <p class="err" id="err" role="alert" hidden></p>
-      <div class="row-acts left">
-        <button class="btn" type="button" data-act="pasteclip">클립보드에서 붙여넣기</button>
-        <button class="btn solid" type="submit">기록 등록</button>
-        <button class="chip-btn" type="button" data-act="clearans">지우기</button>
-      </div>
-    </section>
+    ${first ? '<p class="first-sample"><button class="lnk" type="button" data-act="samples">예시 기록으로 먼저 둘러보기</button></p>' : ''}
   </form>`;
 }
 
@@ -613,6 +622,8 @@ function submitAnswer() {
   if (r.error) {
     err.textContent = r.error;
     err.hidden = false;
+    const box = $('#manual');
+    if (box && draft.answer) box.hidden = false;
     return;
   }
   err.hidden = true;
@@ -727,11 +738,15 @@ async function route() {
 }
 
 function render(parts, q) {
-  const [name = 'index', arg] = parts;
+  const [name0 = 'index', arg] = parts;
+  const first = !store.all().length && name0 !== 'shared';
+  const name = first ? 'intake' : name0;
+  document.body.classList.toggle('solo', first);
   let html;
   let navKey = name;
   let path = `~/${name}`;
-  switch (name) {
+  switch (first ? 'first' : name) {
+    case 'first': html = vIntake(q, { first: true }); navKey = ''; break;
     case 'subjects': html = arg ? vSubject(arg) : vSubjects(); if (arg) path += '/' + arg; break;
     case 'dossiers': html = arg ? vDossier(store.byId(arg)) : vDossiers(); if (arg) path += '/' + (store.byId(arg)?.no || arg); break;
     case 'field_notes': html = vNotes(q); break;
@@ -840,8 +855,12 @@ document.addEventListener('click', async (e) => {
       submitAnswer();
     } catch {
       toast('클립보드를 읽지 못했습니다. 입력칸에 직접 붙여 넣으십시오.', 'alert');
+      $('#manual').hidden = false;
       $('#answer').focus();
     }
+  } else if (act === 'manual') {
+    $('#manual').hidden = false;
+    $('#answer').focus();
   } else if (act === 'clearans') {
     $('#answer').value = '';
     draft.answer = '';
@@ -929,7 +948,7 @@ function boot() {
   const el = $('#boot');
   const seen = sessionStorageSafe('booted');
   sessionStorageSafe('booted', '1');
-  if (seen || reduced.matches || /^#r=/.test(location.hash)) { el.remove(); return; }
+  if (seen || reduced.matches || !store.all().length || /^#r=/.test(location.hash)) { el.remove(); return; }
   const lines = [
     'EO-TERM v4.11 // SECURE LINE',
     'HANDSHAKE ........................ OK',

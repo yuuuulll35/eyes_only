@@ -549,3 +549,30 @@ button { background: none; border: 0; padding: 0; cursor: pointer; text-shadow: 
   .crt::after { display: none; }
   .scan { display: none; }
 }
+
+/* ---------- first entry (no records) ---------- */
+.solo .rail, .solo .crumb, .solo .bar-r .btn, .solo .bar-r .clr { display: none !important; }
+.solo .bar { justify-content: space-between; }
+.solo .shell { display: block; min-height: calc(100vh - var(--bar-h) - 60px); }
+.solo .view { max-width: 760px; margin: 0 auto; padding-top: clamp(28px, 7vh, 72px); }
+.first-h .vh-title .en { font-size: clamp(48px, 11vw, 92px); }
+.first-sample { text-align: center; margin-top: 4px; }
+
+.opt { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.opt summary { cursor: pointer; font-size: 13px; color: var(--ink2); list-style: none; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
+.opt summary::-webkit-details-marker { display: none; }
+.opt summary::before { content: '+'; font-family: var(--px); font-size: 20px; width: 14px; }
+.opt[open] summary::before { content: '−'; }
+.opt summary em { font-style: normal; font-size: 11.5px; color: var(--dim); }
+.opt .fields { margin-top: 10px; }
+
+.flow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.flow .btn { min-height: 52px; font-size: 15px; }
+.flow-arrow { font-family: var(--px); font-size: 22px; color: var(--dim); }
+.manual { margin-top: 14px; }
+.minor { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.minor .count { margin-left: auto; }
+@media (max-width: 640px) {
+  .flow { grid-template-columns: 1fr; gap: 6px; }
+  .flow-arrow { justify-self: center; transform: rotate(90deg); line-height: 1; }
+}
