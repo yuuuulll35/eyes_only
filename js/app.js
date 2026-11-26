@@ -168,55 +168,29 @@ function vIndex() {
     ['RESTRICTED', '열람 제한', locked, '#/classified'],
   ];
 
-  return `${head('00 / INDEX', 'CONFIDENTIAL PERSONNEL OBSERVATION DATABASE', '비밀 인물 조사 및 관찰 기록 아카이브',
+  return `${head('00 / INDEX', 'ARCHIVE STATUS', '관찰 기록 현황',
     `<p class="vh-line">접속 ${esc(fmtDate(new Date().toISOString()))} · 열람자 ${esc(session())} · 저장 ${store.isPersistent() ? '이 브라우저' : '<b class="warn">불가 (임시 열람)</b>'}</p>`)}
   <section class="stats" aria-label="조사 현황">
     ${stats.map(([en, ko, n, href]) => `<a class="stat" href="${href}"><span class="stat-en">${en}</span><b class="stat-n">${String(n).padStart(2, '0')}</b><span class="stat-ko">${ko}</span></a>`).join('')}
   </section>
 
   <section class="grid2">
-    <div class="panel">
-      <h2 class="ph"><span>SELECT OBSERVER</span><em>관찰자 선택</em></h2>
-      <div class="modes">
-        ${[1, 2].map((m) => `<a class="mode-card" href="#/intake?mode=${m}">
-          <span class="mc-code">${MODES[m].code}</span>
-          <b class="mc-name">${MODES[m].name}</b>
-          <span class="mc-desc">${MODES[m].desc}</span>
-          <span class="mc-go">접수 개시 →</span>
-        </a>`).join('')}
+      <div class="panel">
+        <h2 class="ph"><span>PRIORITY SUBJECT</span><em>최고 위험도 대상</em></h2>
+        ${hot ? `<a class="hot" href="${subjLink(hot.name)}">
+          <span class="hot-g">${glyph(hot.name, { size: 96 })}</span>
+          <span class="hot-t"><b>${esc(hot.name)}</b>
+          <span>위험도 ${maxT(hot) >= 0 ? maxT(hot) : '—'} · 관찰 보고서 ${hot.files.length}건</span>
+          <span class="mono-dim">BIO-ID ${code(hot.name)}</span></span></a>` : '<p class="nodata">DATA NOT FOUND</p>'}
       </div>
-    </div>
-    <div class="panel">
-      <h2 class="ph"><span>RECENT FILES</span><em>최근 보고서</em></h2>
-      ${list.length ? `<ol class="recent">${list.slice(0, 5).map((f) => `<li><a href="${fileLink(f)}">
-        <span class="r-no">${esc(f.no)}</span>
-        <span class="r-main"><b>${esc(f.subject)}</b><span class="r-by">← ${esc(obsName(f))}</span></span>
-        <span class="r-title">${esc(f.title || '무제 보고서')}</span>
-        <span class="r-date">${esc(fmtDate(f.at, false))}</span></a></li>`).join('')}</ol>`
-        : `<p class="nodata">NO RECORDS ON FILE<br><small>등록된 보고서가 없습니다.</small></p>
-           <div class="row-acts"><button class="btn" type="button" data-act="samples">예시 기록 불러오기</button></div>`}
-    </div>
-  </section>
-
-  <section class="grid2">
-    <div class="panel">
-      <h2 class="ph"><span>PRIORITY SUBJECT</span><em>최고 위험도 대상</em></h2>
-      ${hot ? `<a class="hot" href="${subjLink(hot.name)}">
-        <span class="hot-g">${glyph(hot.name, { size: 96 })}</span>
-        <span class="hot-t"><b>${esc(hot.name)}</b>
-        <span>위험도 ${maxT(hot) >= 0 ? maxT(hot) : '—'} · 관찰 보고서 ${hot.files.length}건</span>
-        <span class="mono-dim">BIO-ID ${code(hot.name)}</span></span></a>` : '<p class="nodata">DATA NOT FOUND</p>'}
-    </div>
-    <div class="panel">
-      <h2 class="ph"><span>SYSTEM STATUS</span><em>시스템 상태</em></h2>
-      <ul class="sys">
-        <li><span>기록 보관소</span><b>${list.length ? 'ONLINE' : 'STANDBY'}</b></li>
-        <li><span>검수 대기 (오인 기록)</span><b class="${errata ? 'warn' : ''}">${errata}건</b></li>
-        <li><span>봉인 문서</span><b class="${locked ? 'alert' : ''}">${list.reduce((n, f) => n + f.sealed.length, 0)}건</b></li>
-        <li><span>검수 표시</span><b>${audit ? 'ON' : 'OFF'}</b></li>
-      </ul>
-      <div class="row-acts"><a class="btn solid" href="#/intake">+ 새 보고서 접수</a></div>
-    </div>
+      <div class="panel">
+        <h2 class="ph"><span>SYSTEM STATUS</span><em>시스템 상태</em></h2>
+        <ul class="sys">
+          <li><span>검수 대기 (오인 기록)</span><b class="${errata ? 'warn' : ''}">${errata}건</b></li>
+          <li><span>봉인 문서</span><b class="${locked ? 'alert' : ''}">${list.reduce((n, f) => n + f.sealed.length, 0)}건</b></li>
+          <li><span>검수 표시</span><b>${audit ? 'ON' : 'OFF'}</b></li>
+        </ul>
+      </div>
   </section>`;
 }
 

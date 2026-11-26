@@ -587,3 +587,6 @@ button { background: none; border: 0; padding: 0; cursor: pointer; text-shadow: 
 .d-threat small { grid-column: 1 / -1; font-size: 13px; color: var(--dim); }
 .meter.threat { border-color: rgba(255, 97, 87, .5); }
 .meter.threat i { background: repeating-linear-gradient(90deg, var(--red) 0 5px, transparent 5px 7px); box-shadow: 0 0 4px rgba(255, 97, 87, .4); }
+.stack { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.r-no .mode { font-size: 14px; margin-right: 4px; }
+.r-threat { font-family: var(--px); font-size: 15px; color: var(--red); margin-left: 6px; white-space: nowrap; }
