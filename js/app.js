@@ -135,7 +135,7 @@ function head(no, title, extra = '') {
 function vFiles() {
   const list = store.all();
   return `${head('EYES ONLY', '관찰 보고서 목록',
-    `<p class="vh-line">인물 한 명당 보고서 하나. <b>파일을 눌러 열람하십시오.</b> 같은 인물을 다시 검사하면 그 인물의 보고서가 새 내용으로 바뀝니다.</p>`)}
+    `<p class="vh-line">같은 인물을 다시 검사하면 새 내용으로 갱신</p>`)}
   <section class="files" aria-label="보고서">
     ${list.map((f) => `<div class="file-wrap">
     <a class="file m${f.mode}" href="${fileLink(f)}">
