@@ -191,33 +191,45 @@ const notesLog = (notes) => (notes.length
 
 function tabOverview(f) {
   const acc = accuracy(f);
-  const hl = f.headline || (f.verdict || '').split(/\.\s/)[0] || '';
-  const facts = f.profile.slice(0, 3);
+  const tot = Math.max(1, acc.total);
+  const seg = (k, n) => `<i class="seg-${k}" style="--w:${(n / tot) * 100}%"></i>`;
+  const shownFact = acc.fact + (audit ? 0 : acc.error);
   return `
-    <section class="cover">
-      <figure class="polaroid">
-        <span class="tape" aria-hidden="true"></span>
-        <span class="pol-img">${glyph(f.subject, { size: 150 })}<span class="scan" aria-hidden="true"></span></span>
-        <figcaption>${esc(f.subject)}</figcaption>
-      </figure>
-      <div class="cover-main">
-        <p class="cover-k">FINAL CALL · ${esc(obsName(f))}의 판정</p>
-        <blockquote class="headline">${hl ? esc(hl) : '<span class="nf">DATA NOT FOUND</span>'}</blockquote>
-        <div class="cover-row">
-          ${f.threat != null ? gauge(f.threat, threatWord(f.threat)) : ''}
-          <dl class="facts">${facts.map((p) => `<dt>${esc(p.label)}</dt><dd>${body(p.text, p.st)}</dd>`).join('')}</dl>
-        </div>
+    ${f.headline ? `<blockquote class="callout">
+      <p class="callout-k">FINAL CALL <span>— ${esc(obsName(f))}의 판정</span></p>
+      <p class="callout-q">${esc(f.headline)}</p>
+    </blockquote>` : ''}
+
+    <div class="readouts" role="list">
+      <div class="ro ro-threat" role="listitem">
+        <p class="ro-k">THREAT <span>위험도</span></p>
+        <p class="ro-n">${f.threat ?? '—'}<small>/100</small><em>${f.threat != null ? threatWord(f.threat) : ''}</em></p>
+        ${f.threat != null ? gauge(f.threat) : ''}
+        <p class="ro-c">${esc(f.threatWhy || '관찰자가 판단한 위험 정도')}</p>
       </div>
-      ${stickies(f.scribbles, f.subject)}
-    </section>
+      <div class="ro" role="listitem">
+        <p class="ro-k">TRUST <span>출처 신뢰도</span></p>
+        <p class="ro-n">${f.trust ?? '—'}<small>/100</small><em>등급 ${grade(f.trust)}</em></p>
+        ${bar(f.trust, 'ro-bar')}
+        <p class="ro-c">${esc(f.trustWhy || '관찰자의 자기 평가')}</p>
+      </div>
+      <div class="ro" role="listitem">
+        <p class="ro-k">ACCURACY <span>정보 정확도</span></p>
+        <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>아카이브 검수</em></p>
+        <span class="segbar" aria-hidden="true">${seg('fact', shownFact)}${seg('guess', acc.guess)}${audit ? seg('error', acc.error) : ''}${seg('unknown', acc.unknown)}</span>
+        <p class="ro-c">확인 ${shownFact} · 추정 ${acc.guess}${audit ? ` · 오인 ${acc.error}` : ''} · 미확인 ${acc.unknown}</p>
+      </div>
+    </div>
+
+    <div class="ov-split${f.scribbles.length ? '' : ' single'}">
+      ${sec('01', 'KEY DATA', '핵심 신상', entList(f.profile.slice(0, 4), (p) => p.label))}
+      ${f.scribbles.length ? `<section class="margin">
+        <h2 class="sh"><span class="sh-no">M</span><span class="sh-en">MARGIN NOTES</span><span class="sh-ko">${esc(obsName(f))}의 여백 낙서</span></h2>
+        ${stickies(f.scribbles, f.subject)}
+      </section>` : ''}
+    </div>
+
     ${sec('07', 'ASSESSMENT', '조사자의 종합 소견', `<p class="verdict">${f.verdict ? esc(f.verdict) : '<span class="nf">DATA NOT FOUND</span>'}</p>`)}
-    ${sec('08', 'RELIABILITY', '신뢰도 및 정보 정확도', `
-      <div class="rel">
-        <div><p class="mini">출처 신뢰도 (관찰자 자기 평가)</p><p class="rel-n">${f.trust ?? '—'}<small>/100 · 등급 ${grade(f.trust)}</small></p>${blocks(f.trust)}<p class="dim">${esc(f.trustWhy || '')}</p></div>
-        <div><p class="mini">정보 정확도 (아카이브 검수)</p><p class="rel-n">${acc.pct ?? '—'}<small>%</small></p>
-          <p class="segkey"><span class="k-fact">확인 ${acc.fact + (audit ? 0 : acc.error)}</span><span class="k-guess">추정 ${acc.guess}</span>${audit ? `<span class="k-error">오인 ${acc.error}</span>` : ''}<span class="k-unknown">미확인 ${acc.unknown}</span></p>
-          ${acc.error && !audit ? `<p class="hint-amber">오인 기록 ${acc.error}건 검출 · 위의 검수 표시를 켜면 정정됩니다.</p>` : ''}</div>
-      </div>`)}
     ${f.comment ? `<section class="memo"><p class="memo-h">// PERSONAL NOTE — 공식 기록 외 · 조사자 ${esc(obsName(f))}</p><p class="memo-t" data-type>${esc(f.comment)}</p></section>` : ''}`;
 }
 

@@ -19,7 +19,7 @@ AI 채팅에서 OOC로 받은 관찰 보고서를 **기밀 정보기관의 내�
 
 | 탭 | 내용 |
 |---|---|
-| 01 OVERVIEW · 개요 | 증명사진과 관찰자의 **한 줄 판정**, 위험도 **계기판**, 관찰자가 여백에 갈겨쓴 **손글씨 포스트잇**, 종합 소견, 신뢰도·정확도, 개인 코멘트 |
+| 01 OVERVIEW · 개요 | 관찰자의 **한 줄 판정** → 같은 모양의 수치 3칸(위험도 **계기판** · 출처 신뢰도 · 정보 정확도) → 핵심 신상과 관찰자의 **손글씨 여백 낙서** → 종합 소견 → 개인 코멘트 |
 | 02 DOSSIER · 신상 기록 | 기본 신상, **관계도**(가운데 대상, 실선은 PC, 점선은 관찰자의 시선), 외관, 선호·기피 |
 | 03 SURVEILLANCE · 감시 기록 | 현장 관찰을 **CCTV 캡처** 화면으로, **도청 기록**은 ▶를 누르면 파형이 움직이며 대사가 나온다 |
 | 04 PSYCHOLOGICAL · 행동 패턴 | 성향 **레이더 차트**와 수치·근거, 성격·행동 양식 |
@@ -117,4 +117,4 @@ js/data.js     예시 기록 3건
 |---|---|---|---|
 | [VT323](https://fonts.google.com/specimen/VT323) | 영문 제목, 번호, 라벨 | © The VT323 Project Authors | Google Fonts |
 | [Nanum Gothic Coding](https://fonts.google.com/specimen/Nanum+Gothic+Coding) | 본문, 한글 전체 | © NAVER Corporation | Google Fonts |
-| [Nanum Pen Script](https://fonts.google.com/specimen/Nanum+Pen+Script) | 손글씨 포스트잇, 증명사진 이름 | © Sandoll Communication | Google Fonts |
+| [Nanum Pen Script](https://fonts.google.com/specimen/Nanum+Pen+Script) | 손글씨 여백 낙서 | © Sandoll Communication | Google Fonts |

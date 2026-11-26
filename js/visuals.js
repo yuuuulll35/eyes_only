@@ -11,7 +11,7 @@ function seed(str) {
 }
 
 /* 위험도 계기판 */
-export function gauge(v, word) {
+export function gauge(v) {
   const n = clamp(v);
   const ang = -90 + (n / 100) * 180;
   const arc = (from, to, r) => {
@@ -25,15 +25,12 @@ export function gauge(v, word) {
     const r1 = i % 5 ? 70 : 64;
     return `<line x1="${(100 + r1 * Math.cos(a)).toFixed(1)}" y1="${(100 + r1 * Math.sin(a)).toFixed(1)}" x2="${(100 + 76 * Math.cos(a)).toFixed(1)}" y2="${(100 + 76 * Math.sin(a)).toFixed(1)}"/>`;
   }).join('');
-  return `<figure class="gauge" style="--ang:${ang}deg" aria-label="위험도 ${n} / 100, ${word}">
-    <svg viewBox="0 0 200 116" aria-hidden="true">
+  return `<svg class="gauge" viewBox="0 0 200 108" style="--ang:${ang}deg" aria-hidden="true">
       <path class="g-bg" d="${arc(0, 100, 84)}"/>
       <path class="g-low" d="${arc(0, 40, 84)}"/><path class="g-mid" d="${arc(40, 70, 84)}"/><path class="g-high" d="${arc(70, 100, 84)}"/>
       <g class="g-ticks">${ticks}</g>
       <g class="g-needle"><line x1="100" y1="100" x2="100" y2="34"/><circle cx="100" cy="100" r="6"/></g>
-    </svg>
-    <figcaption><b>${n}</b><span>THREAT · ${esc(word)}</span></figcaption>
-  </figure>`;
+    </svg>`;
 }
 
 /* 관계도: 가운데 대상, 둘레에 관계 인물, 관찰자는 점선으로 지켜본다 */
