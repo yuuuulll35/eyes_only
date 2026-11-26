@@ -22,7 +22,7 @@ const TABS = [
   ['dossier', '신상 정보', (o, t) => `${josa(o, '이', '가')} 알아낸 ${t}의 신상과 인간관계입니다.`],
   ['field_notes', '미행·도청', (o, t) => `${josa(o, '이', '가')} 몰래 지켜본 ${t}의 모습과 엿들은 말입니다.`],
   ['psychological', '성격 분석', (o, t) => `${josa(o, '이', '가')} 판단한 ${t}의 성향과 습관입니다.`],
-  ['classified', '숨긴 기록', (o) => `공식 보고서에서 뺀 ${o}의 속마음과, 잘못 알고 있던 내용입니다.`],
+  ['classified', '숨긴 기록', (o) => `공식 보고서에서 지운 ${o}의 속마음입니다.`],
 ];
 
 const ST = {
@@ -258,15 +258,8 @@ function tabPsych(f) {
 
 function tabClassified(f) {
   const O = esc(obsName(f));
-  const OJ = josa(O, '이', '가');
-  const errata = [...f.profile, ...f.look, ...f.traits, ...f.likes, ...f.dislikes, ...f.relations].filter((i) => i.st === 'error');
   return `
-    ${sec('01', `${O}의 속마음`, '공식 기록에서 지운 메모 · 눌러서 보기', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}
-    ${sec('02', '바로잡은 기록', `${OJ} 잘못 알고 있던 내용`, errata.length
-      ? (audit
-        ? `<ul class="errata">${errata.map((e) => `<li><p class="e-old">${esc(e.text)}</p><p class="e-new">→ ${esc(e.real || 'DATA NOT FOUND')}</p></li>`).join('')}</ul>`
-        : `<p class="hint">${OJ} 잘못 알고 쓴 내용이 ${errata.length}건 있습니다. 위의 <b>오해 바로잡기</b>를 켜면 보입니다.</p>`)
-      : NODATA)}`;
+    ${sec('01', `${O}의 속마음`, '공식 기록에서 지운 메모 · 눌러서 보기', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}`;
 }
 
 function tabIncidents(f, external) {
