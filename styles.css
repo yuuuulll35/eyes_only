@@ -1055,3 +1055,16 @@ button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { bac
 .d-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .d-top .back { margin: 0; }
 .foot { justify-content: center; }
+
+/* 사실 여부 판정 대기 */
+.judge { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 16px; border: 1px dashed var(--amber); background: rgba(255, 198, 110, .05); }
+.judge-t { flex: 1; min-width: 240px; }
+.judge-h { font-size: 15.5px; font-weight: 700; color: var(--amber); }
+.judge-h b { font-family: var(--px); font-weight: 400; font-size: 20px; margin-left: 6px; }
+.judge-d { margin-top: 2px; font-size: 13.5px; color: var(--ink2); }
+.judge .btn { flex: none; }
+.tabs-anchor { display: block; height: 0; }
+.dossier > .tabs-anchor + .tabs { margin-top: 0; }
+.linked { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 12px; padding: 10px 12px; border: 1px solid rgba(255, 198, 110, .4); font-size: 14px; color: var(--ink2); }
+.linked b { color: var(--amber); }
+@media (max-width: 640px) { .judge .btn { width: 100%; } }

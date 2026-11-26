@@ -124,7 +124,7 @@ export function wiretap(list, who = '') {
         <button class="tap-play" type="button" data-act="play" aria-label="도청 기록 ${i + 1} 재생">▶</button>
         <div class="wave" aria-hidden="true">${bars}</div>
       </div>
-      <p class="tap-q" data-said="${esc(t.said)}"><span class="tap-hidden">▶를 누르면 엿들은 말이 나옵니다</span></p>
+      <p class="tap-q" data-said="${esc(t.said)}"><span class="tap-hidden">▶를 누르면 엿들은 말 재생</span></p>
       ${memoLine(t.memo, who)}
     </div>`;
   }).join('')}</div>`;
@@ -144,7 +144,7 @@ export function chatLog(list, observer, mode) {
       ${list.slice(0, 5).map((t, i) => `<li class="bubble" style="--d:${(i * 0.45).toFixed(2)}s">${esc(t)}</li>`).join('')}
       <li class="bubble typing" style="--d:${(Math.min(list.length, 5) * 0.45).toFixed(2)}s" aria-label="입력 중"><i></i><i></i><i></i></li>
     </ol>
-    <p class="chat-input" aria-hidden="true"><span>열람 전용 · 메시지를 보낼 수 없습니다</span><b>전송</b></p>
+    <p class="chat-input" aria-hidden="true"><span>열람 전용 · 메시지 전송 불가</span><b>전송</b></p>
   </div>`;
 }
 
@@ -154,6 +154,6 @@ export function timeline(incidents, trigger, who = '') {
   if (!rows.length && !trigger) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
   return `<ol class="tline">
     ${rows.map((i) => `<li class="${trigger && i.name.includes(trigger) ? 'is-trig' : ''}"><span class="tl-n">사건 ${String(i.n).padStart(2, '0')}</span><b>${esc(i.name)}</b><p>${esc(i.text)}</p>${memoLine(i.memo, who)}</li>`).join('')}
-    ${trigger ? `<li class="is-now"><span class="tl-n">지금</span><b>「${esc(trigger)}」 이후 이 보고서 작성</b><p>이 사건을 계기로 새로 쓴 기록입니다.</p></li>` : ''}
+    ${trigger ? `<li class="is-now"><span class="tl-n">지금</span><b>「${esc(trigger)}」 이후 이 보고서 작성</b><p>이 사건을 계기로 새로 쓴 기록</p></li>` : ''}
   </ol>`;
 }
