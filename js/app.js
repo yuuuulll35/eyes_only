@@ -2,6 +2,7 @@ import { buildPrompt, parse, MODES } from './ooc.js';
 import { SAMPLES } from './data.js';
 import * as store from './store.js';
 import { glyph } from './glyph.js';
+import { gauge, relationMap, radar, cctv, wiretap, stickies, timeline } from './visuals.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -18,7 +19,7 @@ let openId = '';
 const TABS = [
   ['overview', 'OVERVIEW', '개요'],
   ['dossier', 'DOSSIER', '신상 기록'],
-  ['field_notes', 'FIELD NOTES', '현장 기록'],
+  ['field_notes', 'SURVEILLANCE', '감시 기록'],
   ['psychological', 'PSYCHOLOGICAL', '행동 패턴'],
   ['classified', 'CLASSIFIED', '열람 제한'],
   ['incident_log', 'INCIDENT LOG', '사건 기록'],
@@ -190,8 +191,25 @@ const notesLog = (notes) => (notes.length
 
 function tabOverview(f) {
   const acc = accuracy(f);
+  const hl = f.headline || (f.verdict || '').split(/\.\s/)[0] || '';
+  const facts = f.profile.slice(0, 3);
   return `
-    ${sec('01', 'SUMMARY', '기본 신상 요약', entList(f.profile.slice(0, 4), (p) => p.label))}
+    <section class="cover">
+      <figure class="polaroid">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="pol-img">${glyph(f.subject, { size: 150 })}<span class="scan" aria-hidden="true"></span></span>
+        <figcaption>${esc(f.subject)}</figcaption>
+      </figure>
+      <div class="cover-main">
+        <p class="cover-k">FINAL CALL · ${esc(obsName(f))}의 판정</p>
+        <blockquote class="headline">${hl ? esc(hl) : '<span class="nf">DATA NOT FOUND</span>'}</blockquote>
+        <div class="cover-row">
+          ${f.threat != null ? gauge(f.threat, threatWord(f.threat)) : ''}
+          <dl class="facts">${facts.map((p) => `<dt>${esc(p.label)}</dt><dd>${body(p.text, p.st)}</dd>`).join('')}</dl>
+        </div>
+      </div>
+      ${stickies(f.scribbles, f.subject)}
+    </section>
     ${sec('07', 'ASSESSMENT', '조사자의 종합 소견', `<p class="verdict">${f.verdict ? esc(f.verdict) : '<span class="nf">DATA NOT FOUND</span>'}</p>`)}
     ${sec('08', 'RELIABILITY', '신뢰도 및 정보 정확도', `
       <div class="rel">
@@ -206,22 +224,26 @@ function tabOverview(f) {
 function tabDossier(f) {
   return `
     ${sec('01', 'PERSONAL DATA', '기본 신상 정보', entList(f.profile, (p) => p.label))}
+    ${sec('05', 'RELATION MAP', '대인관계도 · 점선은 관찰자의 시선', `${relationMap(f)}${entList(f.relations, (r) => r.who)}`)}
     ${sec('02', 'IDENTIFYING FEATURES', '외관 및 식별 특징', entList(f.look))}
-    ${sec('03', 'BEHAVIOR', '성격 및 행동 양식', entList(f.traits))}
     ${sec('04', 'PREFERENCE / AVERSION', '선호 및 기피 요소', `<div class="two">
       <div><p class="mini">+ 선호</p>${entList(f.likes)}</div>
-      <div><p class="mini">− 기피</p>${entList(f.dislikes)}</div></div>`)}
-    ${sec('05', 'RELATIONS', '대인관계 분석', entList(f.relations, (r) => r.who))}`;
+      <div><p class="mini">− 기피</p>${entList(f.dislikes)}</div></div>`)}`;
 }
 
-const tabNotes = (f) => sec('06', 'FIELD RECORD', '일상 관찰 및 현장 기록', notesLog(f.notes));
+function tabNotes(f) {
+  return `
+    ${sec('06', 'CCTV CAPTURE', '현장 관찰 기록', cctv(f.notes, body))}
+    ${sec('W', 'WIRETAP', '도청 기록 · ▶를 눌러 청취', wiretap(f.intercepts))}`;
+}
 
 function tabPsych(f) {
+  const r = radar(f.psych);
   return `
-    ${sec('P1', 'MEASUREMENT', '성향 측정치 (관찰자 판단)', f.psych.length
-      ? `<ul class="psy wide">${f.psych.map((p) => `<li><span>${esc(p.k)}</span>${bar(p.v)}<b>${p.v}</b>${p.why ? `<small>${esc(p.why)}</small>` : ''}</li>`).join('')}</ul>`
+    ${sec('03', 'PROFILE', '성향 측정치 (관찰자 판단)', f.psych.length
+      ? `<div class="psy-wrap">${r}<ul class="psy wide">${f.psych.map((p) => `<li><span>${esc(p.k)}</span>${bar(p.v)}<b>${p.v}</b>${p.why ? `<small>${esc(p.why)}</small>` : ''}</li>`).join('')}</ul></div>`
       : '<p class="nodata">DATA NOT FOUND</p>')}
-    ${sec('P2', 'BEHAVIOR PATTERN', '관찰된 습관과 행동 패턴', entList(f.traits))}`;
+    ${sec('03', 'BEHAVIOR PATTERN', '성격 및 행동 양식', entList(f.traits))}`;
 }
 
 function tabClassified(f) {
@@ -238,10 +260,7 @@ function tabClassified(f) {
 
 function tabIncidents(f, external) {
   return `
-    ${f.trigger ? `<p class="d-trig">⚠ 이 보고서는 사건 「${esc(f.trigger)}」 이후 작성되었습니다.</p>` : ''}
-    ${sec('06', 'INCIDENTS', '특이 사건 및 돌발 상황', f.incidents.length
-      ? `<ul class="inc">${f.incidents.map((i) => `<li><b>${esc(i.name)}</b><span>${esc(i.text)}</span></li>`).join('')}</ul>`
-      : '<p class="nodata">DATA NOT FOUND</p>')}
+    ${sec('06', 'INCIDENT TIMELINE', '특이 사건 및 돌발 상황', timeline(f.incidents, f.trigger))}
     ${external ? '' : `<div class="next-case">
       <p>새 사건이 생겼다면 사건 이름을 적고 같은 인물을 다시 검사하십시오. 이 보고서가 새 내용으로 바뀝니다.</p>
       <a class="btn" href="#/intake?trigger=1">사건 후속 보고서 만들기</a>
@@ -253,7 +272,7 @@ const TAB_VIEW = { overview: tabOverview, dossier: tabDossier, field_notes: tabN
 function tabCount(f, k) {
   return {
     dossier: f.profile.length + f.look.length + f.traits.length + f.likes.length + f.dislikes.length + f.relations.length,
-    field_notes: f.notes.length,
+    field_notes: f.notes.length + (f.intercepts?.length || 0),
     psychological: f.psych.length,
     classified: f.restricted.length + f.sealed.length,
     incident_log: f.incidents.length,
@@ -261,6 +280,7 @@ function tabCount(f, k) {
 }
 
 function vFile(f, { external = false } = {}) {
+  if (f) { f.intercepts ||= []; f.scribbles ||= []; }
   if (!f) return head('FILE', 'FILE NOT FOUND', '존재하지 않는 보고서') + '<p class="nodata big">DATA NOT FOUND</p><div class="row-acts"><a class="btn" href="#/files">← 보고서 목록</a></div>';
   const i = Math.max(0, TABS.findIndex(([k]) => k === tab));
   const [k, en, ko] = TABS[i];
@@ -277,7 +297,6 @@ function vFile(f, { external = false } = {}) {
         <h1 class="d-title" tabindex="-1">${esc(f.subject)}<small>「${esc(f.title || '무제 보고서')}」</small></h1>
         <p class="d-route"><span class="who">${esc(obsName(f))}</span><span class="arrow" aria-hidden="true">──▶</span><span class="who tgt">${esc(f.subject)}</span></p>
         <p class="d-ctx">${f.mode === 2 ? `감시 범위: <b>${esc(pcName(f))}</b>의 주변` : `보호 대상: <b>${esc(pcName(f))}</b> · 대상은 그 곁의 인물`} · 관찰자 신분: ${esc(f.observer?.rel || '미상')}</p>
-        ${f.threat != null ? `<p class="d-threat"><span>THREAT</span>${bar(f.threat, 'threat')}<b>${f.threat}</b><em>${threatWord(f.threat)}</em>${f.threatWhy ? `<small>${esc(f.threatWhy)}</small>` : ''}</p>` : ''}
       </div>
       <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>${f.threat != null ? `THREAT ${f.threat}` : `CLASSIFIED · ${grade(f.trust)}`}</span></div>
     </header>
@@ -656,6 +675,24 @@ document.addEventListener('click', async (e) => {
     showTab(tab);
     window.scrollTo(0, y);
     toast(audit ? '검수 표시 ON · 사실과 다른 기록을 정정해 보여 줍니다.' : '검수 표시 OFF · 관찰자가 쓴 그대로 보여 줍니다.');
+  } else if (act === 'play') {
+    const tap = b.closest('.tap');
+    const q = $('.tap-q', tap);
+    if (tap.classList.contains('playing')) return;
+    tap.classList.add('playing', 'played');
+    b.textContent = '■';
+    const said = q.dataset.said;
+    q.textContent = '';
+    const chars = [...said];
+    let i = 0;
+    const step = () => {
+      if (!q.isConnected) return;
+      i = reduced.matches ? chars.length : i + 1;
+      q.textContent = `“${chars.slice(0, i).join('')}${i < chars.length ? '' : '”'}`;
+      if (i < chars.length) setTimeout(step, 55);
+      else { tap.classList.remove('playing'); b.textContent = '▶'; }
+    };
+    step();
   } else if (act === 'reveal') {
     const box = b.closest('.redact');
     const t = $('.redact-t', box);

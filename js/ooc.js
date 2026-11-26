@@ -13,6 +13,7 @@ const FORMAT = `[출력] 역할극 서술 없이 코드블록 하나에 아래 �
 대상: 이름
 PC: 이름
 제목: 보고서 제목 20자 이내
+판정: 관찰자 말투의 한 줄 판정 30자 이내
 위험도: 0~100 · 관찰자가 본 위험 근거
 신상: 항목 · 내용 · 확인 (4줄)
 외관: 식별 특징 · 확인 (3줄)
@@ -21,13 +22,15 @@ PC: 이름
 기피: 내용 · 추정 (2줄)
 관계: 인물 · 관계 분석 · 추정 (2줄, 첫 줄은 PC)
 관찰: 일시 · 장소 · 관찰 기록 (3줄)
+도청: "대상이 서사에서 실제로 한 말" · 상황 (2줄)
 사건: 사건명 · 경위와 결과 (2줄)
 심리: 성향 2~6자 · 0~100 · 근거 (4줄)
 소견: 종합 소견 2문장
 신뢰도: 0~100 · 근거
 열람 제한: 공식 기록에서 뺀 사적인 기록 (2줄)
 봉인: 문서명 · 봉인 사유 (1줄)
-코멘트: 관찰자의 개인 코멘트 1~2문장`;
+코멘트: 관찰자의 개인 코멘트 1~2문장
+낙서: 관찰자가 여백에 갈겨쓴 혼잣말 20자 이내 (3줄)`;
 
 export const MODES = {
   1: { code: 'MODE 01', name: "OBSERVER'S RECORD", ko: '관찰자의 기록', desc: 'NPC가 PC 곁의 인물을 경계하며 쓴 관찰 기록' },
@@ -71,6 +74,9 @@ const KEYS = [
   ['subject', /^(?:대상|조사\s*대상|관찰\s*대상)$/],
   ['pc', /^(?:PC|보호\s*대상|감시\s*범위)$/i],
   ['threat', /^(?:위험도|위협도|경계\s*등급)$/],
+  ['headline', /^(?:판정|한\s*줄\s*판정)$/],
+  ['intercepts', /^(?:도청|감청)$/],
+  ['scribbles', /^(?:낙서|여백)$/],
   ['title', /^(?:제목|보고서\s*제목)$/],
   ['profile', /^(?:신상|기본\s*신상(?:\s*정보)?)$/],
   ['look', /^(?:외관|외형|식별\s*특징)$/],
@@ -159,7 +165,7 @@ export function parse(text) {
     mode: 0, observer: { name: '', rel: '' }, subject: '', pc: '', threat: null, threatWhy: '', title: '',
     profile: [], look: [], traits: [], likes: [], dislikes: [], relations: [],
     notes: [], incidents: [], psych: [], verdict: '', trust: null, trustWhy: '',
-    restricted: [], sealed: [], comment: '',
+    restricted: [], sealed: [], comment: '', headline: '', intercepts: [], scribbles: [],
   };
   let hits = 0;
 
@@ -188,6 +194,15 @@ export function parse(text) {
         f.threatWhy = clip(p.slice(1).join(' · '), L);
         break;
       }
+      case 'headline': f.headline = clip(clean(value), 40); break;
+      case 'intercepts': {
+        const q = value.match(/^["“'‘「『](.+?)["”'’」』]\s*(?:[·•∙|,:\-–—]\s*)?(.*)$/);
+        const parts = q ? [q[1], q[2]] : value.split(SEP);
+        const said = clean(parts[0]);
+        if (said) f.intercepts.push({ said: clip(said, 80), where: clip(clean(parts.slice(1).join(' · ')), 40) });
+        break;
+      }
+      case 'scribbles': f.scribbles.push(clip(clean(value), 28)); break;
       case 'title': f.title = clip(clean(value), LIMITS.title); break;
       case 'profile': {
         const { parts, st, real } = splitEntry(value);
