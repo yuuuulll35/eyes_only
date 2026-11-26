@@ -399,7 +399,7 @@ function vFile(f, { external = false } = {}) {
 
     <nav class="pager" aria-label="이전 · 다음 항목">
       ${prev ? `<button class="btn" type="button" data-tab="${prev[0]}">← ${prev[1]}</button>` : '<span></span>'}
-      ${next ? `<button class="btn solid" type="button" data-tab="${next[0]}">다음: ${next[1]} →</button>` : (external ? '' : '<a class="btn solid" href="#/files">보고서 목록으로</a>')}
+      ${next ? `<button class="btn solid" type="button" data-tab="${next[0]}">${next[1]} →</button>` : (external ? '' : '<a class="btn solid" href="#/files">보고서 목록으로</a>')}
     </nav>
 
   </article>`;
