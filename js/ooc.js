@@ -33,14 +33,16 @@ PC: 이름
 낙서: 관찰자가 여백에 갈겨쓴 혼잣말 20자 이내 (3줄)`;
 
 export const MODES = {
-  1: { code: 'MODE 01', name: "OBSERVER'S RECORD", ko: '관찰자의 기록', desc: 'NPC가 PC 곁의 인물을 경계하며 쓴 관찰 기록' },
-  2: { code: 'MODE 02', name: 'SUBJECT UNDER SURVEILLANCE', ko: '감시 대상', desc: 'PC 주변을 감시하듯 맴도는 NPC를 제3자가 지켜보며 쓴 기록' },
+  1: { code: 'MODE 01', name: "OBSERVER'S RECORD", label: '경계 기록', desc: 'NPC가 PC 곁의 인물을 경계하며 몰래 적은 기록' },
+  2: { code: 'MODE 02', name: 'SUBJECT UNDER SURVEILLANCE', label: '감시 기록', desc: 'PC 주변을 맴도는 NPC를 정체 모를 제3자가 지켜보며 적은 기록' },
 };
 
-function josa(word, a, b) {
+export function josa(word, a, b) {
   const c = word.charCodeAt(word.length - 1);
   if (c >= 0xac00 && c <= 0xd7a3) return word + ((c - 0xac00) % 28 ? a : b);
   if (/^(?:N?PC)$/.test(word)) return word + ({ 을: '를', 이: '가', 은: '는', 과: '와' }[a] || b);
+  const L = word.match(/(?:^|[\s\d])([A-Za-z])$/);
+  if (L) return word + (/[LMNRlmnr]/.test(L[1]) ? a : b);
   return `${word}${a}(${b})`;
 }
 

@@ -1,4 +1,4 @@
-import { buildPrompt, parse, MODES } from './ooc.js';
+import { buildPrompt, parse, MODES, josa } from './ooc.js';
 import { SAMPLES } from './data.js';
 import * as store from './store.js';
 import { glyph } from './glyph.js';
@@ -17,12 +17,12 @@ let openId = '';
 
 /* 보고서 안의 탭. 순서대로 읽도록 다음 버튼으로 이어진다 */
 const TABS = [
-  ['overview', 'OVERVIEW', '개요'],
-  ['dossier', 'DOSSIER', '신상 기록'],
-  ['field_notes', 'SURVEILLANCE', '감시 기록'],
-  ['psychological', 'PSYCHOLOGICAL', '행동 패턴'],
-  ['classified', 'CLASSIFIED', '열람 제한'],
-  ['incident_log', 'INCIDENT LOG', '사건 기록'],
+  ['overview', '한눈에 보기', '관찰자의 결론과 위험도, 핵심 정보를 먼저 봅니다.'],
+  ['dossier', '신상 정보', '관찰자가 알아낸 대상의 신상과 인간관계입니다.'],
+  ['field_notes', '미행·도청', '관찰자가 몰래 지켜본 장면과 엿들은 말입니다.'],
+  ['psychological', '성격 분석', '관찰자가 판단한 대상의 성향과 습관입니다.'],
+  ['classified', '숨긴 기록', '공식 보고서에서 뺀 관찰자의 속마음과 봉인된 문서입니다.'],
+  ['incident_log', '사건 일지', '대상과 관련해 벌어진 일들을 순서대로 봅니다.'],
 ];
 
 const ST = {
@@ -67,7 +67,7 @@ const nf = (text) => /data\s*not\s*found/i.test(text);
 function body(text, st = '') {
   if (st === 'unknown' || nf(text)) {
     const rest = String(text).replace(/data\s*not\s*found[.\s·]*/i, '').trim();
-    return `<span class="nf" data-text="DATA NOT FOUND">DATA NOT FOUND</span>${rest ? ` <span class="nf-note">${esc(rest)}</span>` : ''}`;
+    return `<span class="nf" data-text="DATA NOT FOUND">DATA NOT FOUND</span> <span class="nf-note">${rest ? esc(rest) : '알아내지 못함'}</span>`;
   }
   return esc(text);
 }
@@ -82,15 +82,16 @@ function entry(item, label = '') {
   const errOn = item.st === 'error' && audit;
   return `<li class="ent${errOn ? ' is-err' : ''}${item.st === 'guess' ? ' is-guess' : ''}">
     ${label ? `<span class="ent-k">${esc(label)}</span>` : ''}
-    <span class="ent-v"><span class="ent-t">${body(item.text, item.st)}</span>${errOn && item.real ? `<span class="ent-fix"><b>검수 정정</b> ${esc(item.real)}</span>` : ''}</span>
+    <span class="ent-v"><span class="ent-t">${body(item.text, item.st)}</span>${errOn && item.real ? `<span class="ent-fix"><b>실제로는</b> ${esc(item.real)}</span>` : ''}</span>
     ${stTag(item.st)}
   </li>`;
 }
 
 function entList(items, labelOf) {
-  return items.length ? `<ul class="ents">${items.map((i) => entry(i, labelOf ? labelOf(i) : '')).join('')}</ul>` : '<p class="nodata">DATA NOT FOUND</p>';
+  return items.length ? `<ul class="ents">${items.map((i) => entry(i, labelOf ? labelOf(i) : '')).join('')}</ul>` : NODATA;
 }
 
+const NODATA = '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
 const grade = (v) => (v == null ? '—' : v >= 80 ? 'A' : v >= 60 ? 'B' : v >= 40 ? 'C' : 'D');
 const threatWord = (v) => (v >= 70 ? '높음' : v >= 40 ? '주의' : '낮음');
 
@@ -113,15 +114,15 @@ function blocks(v) {
   return `<span class="blocks" aria-hidden="true">${'█'.repeat(n)}<span>${'░'.repeat(20 - n)}</span></span>`;
 }
 
-const modeChip = (m) => `<span class="mode m${m}">${MODES[m]?.code || 'MODE ??'}</span>`;
+const modeChip = (m) => `<span class="mode m${m}">${MODES[m]?.label || '기록'}</span>`;
 const fileLink = (f) => `#/file/${encodeURIComponent(f.id)}`;
 const obsName = (f) => f.observer?.name || 'UNKNOWN';
 const pcName = (f) => f.pc || 'PC';
 
-function head(no, en, ko, extra = '') {
+function head(no, title, extra = '') {
   return `<header class="vh">
     <p class="vh-no">${esc(no)}</p>
-    <h1 class="vh-title" tabindex="-1"><span class="en">${esc(en)}</span><span class="ko">${esc(ko)}</span></h1>
+    <h1 class="vh-title kr" tabindex="-1">${esc(title)}</h1>
     ${extra}
   </header>`;
 }
@@ -130,7 +131,7 @@ function head(no, en, ko, extra = '') {
 
 function vFiles() {
   const list = store.all();
-  return `${head('FILE CABINET', 'OBSERVATION FILES', '관찰 보고서 목록',
+  return `${head('EYES ONLY · 보관함', '관찰 보고서 목록',
     `<p class="vh-line">인물 한 명당 보고서 하나. <b>파일을 눌러 열람하십시오.</b> 같은 인물을 다시 검사하면 그 인물의 보고서가 새 내용으로 바뀝니다.</p>`)}
   <section class="files" aria-label="보고서">
     ${list.map((f) => `<a class="file m${f.mode}" href="${fileLink(f)}">
@@ -140,12 +141,12 @@ function vFiles() {
         <span class="file-b">
           <span class="file-mode">${modeChip(f.mode)}</span>
           <b class="file-name">${esc(f.subject)}</b>
-          <span class="file-ctx">${f.mode === 2 ? `${esc(obsName(f))}의 감시 기록 · ${esc(pcName(f))} 주변을 맴도는 인물` : `${esc(obsName(f))}의 경계 기록 · ${esc(pcName(f))} 곁의 인물`}</span>
+          <span class="file-ctx">${f.mode === 2 ? `${esc(pcName(f))} 주변을 맴도는 인물. ${esc(josa(obsName(f), '이', '가'))} 몰래 지켜봄` : `${esc(pcName(f))} 곁의 인물. ${esc(josa(obsName(f), '이', '가'))} 경계 중`}</span>
           <span class="file-title">「${esc(f.title || '무제 보고서')}」</span>
         </span>
       </span>
       <span class="file-foot">
-        <span class="file-threat"><em>THREAT</em>${f.threat != null ? `${bar(f.threat, 'threat')}<b>${f.threat}</b>` : '<b>—</b>'}</span>
+        <span class="file-threat"><em>위험도</em>${f.threat != null ? `${bar(f.threat, 'threat')}<b>${f.threat}</b>` : '<b>—</b>'}</span>
         <span class="file-open">열람 →</span>
       </span>
     </a>`).join('')}
@@ -175,19 +176,19 @@ function redacted(text, key) {
 
 function sealed(s) {
   return `<div class="sealed">
-    <p class="sealed-h"><b>ACCESS DENIED</b><span>${esc(s.name)}</span></p>
+    <p class="sealed-h"><b>ACCESS DENIED</b><span>열람 불가 · ${esc(s.name)}</span></p>
     <p class="sealed-w">봉인 사유: ${esc(s.why || '미기재')}</p>
     <button class="chip-btn alert" type="button" data-act="denied">열람 요청</button>
   </div>`;
 }
 
-function sec(no, en, ko, inner, cls = '') {
-  return `<section class="sec ${cls}"><h2 class="sh"><span class="sh-no">${no}</span><span class="sh-en">${en}</span><span class="sh-ko">${ko}</span></h2>${inner}</section>`;
+function sec(no, title, sub, inner, cls = '') {
+  return `<section class="sec ${cls}"><h2 class="sh"><span class="sh-no">${no}</span><span class="sh-t">${title}</span>${sub ? `<span class="sh-ko">${sub}</span>` : ''}</h2>${inner}</section>`;
 }
 
 const notesLog = (notes) => (notes.length
   ? `<ol class="log">${notes.map((n) => `<li><span class="log-t">${esc(n.when || '--:--')}</span><span class="log-p">${esc(n.where || '장소 미상')}</span><span class="log-x">${body(n.text, n.st)}</span></li>`).join('')}</ol>`
-  : '<p class="nodata">DATA NOT FOUND</p>');
+  : NODATA);
 
 function tabOverview(f) {
   const acc = accuracy(f);
@@ -196,83 +197,83 @@ function tabOverview(f) {
   const shownFact = acc.fact + (audit ? 0 : acc.error);
   return `
     ${f.headline ? `<blockquote class="callout">
-      <p class="callout-k">FINAL CALL <span>— ${esc(obsName(f))}의 판정</span></p>
+      <p class="callout-k">${esc(obsName(f))}의 한 줄 결론</p>
       <p class="callout-q">${esc(f.headline)}</p>
     </blockquote>` : ''}
 
     <div class="readouts" role="list">
       <div class="ro ro-threat" role="listitem">
-        <p class="ro-k">THREAT <span>위험도</span></p>
+        <p class="ro-k">위험도 <span>관찰자가 본 위험 정도</span></p>
         <p class="ro-n">${f.threat ?? '—'}<small>/100</small><em>${f.threat != null ? threatWord(f.threat) : ''}</em></p>
         ${f.threat != null ? gauge(f.threat) : ''}
         <p class="ro-c">${esc(f.threatWhy || '관찰자가 판단한 위험 정도')}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">TRUST <span>출처 신뢰도</span></p>
+        <p class="ro-k">관찰자 확신 <span>스스로 매긴 신뢰도</span></p>
         <p class="ro-n">${f.trust ?? '—'}<small>/100</small><em>등급 ${grade(f.trust)}</em></p>
         ${bar(f.trust, 'ro-bar')}
         <p class="ro-c">${esc(f.trustWhy || '관찰자의 자기 평가')}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">ACCURACY <span>정보 정확도</span></p>
-        <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>아카이브 검수</em></p>
+        <p class="ro-k">사실 일치율 <span>확인된 사실의 비율</span></p>
+        <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>검수 결과</em></p>
         <span class="segbar" aria-hidden="true">${seg('fact', shownFact)}${seg('guess', acc.guess)}${audit ? seg('error', acc.error) : ''}${seg('unknown', acc.unknown)}</span>
         <p class="ro-c">확인 ${shownFact} · 추정 ${acc.guess}${audit ? ` · 오인 ${acc.error}` : ''} · 미확인 ${acc.unknown}</p>
       </div>
     </div>
 
     <div class="ov-split${f.scribbles.length ? '' : ' single'}">
-      ${sec('01', 'KEY DATA', '핵심 신상', entList(f.profile.slice(0, 4), (p) => p.label))}
+      ${sec('01', '핵심 신상', '', entList(f.profile.slice(0, 4), (p) => p.label))}
       ${f.scribbles.length ? `<section class="margin">
-        <h2 class="sh"><span class="sh-no">M</span><span class="sh-en">MARGIN NOTES</span><span class="sh-ko">${esc(obsName(f))}의 여백 낙서</span></h2>
+        <h2 class="sh"><span class="sh-no">02</span><span class="sh-t">여백 낙서</span><span class="sh-ko">${esc(obsName(f))}가 보고서 귀퉁이에 끄적인 말</span></h2>
         ${stickies(f.scribbles, f.subject)}
       </section>` : ''}
     </div>
 
-    ${sec('07', 'ASSESSMENT', '조사자의 종합 소견', `<p class="verdict">${f.verdict ? esc(f.verdict) : '<span class="nf">DATA NOT FOUND</span>'}</p>`)}
-    ${f.comment ? `<section class="memo"><p class="memo-h">// PERSONAL NOTE — 공식 기록 외 · 조사자 ${esc(obsName(f))}</p><p class="memo-t" data-type>${esc(f.comment)}</p></section>` : ''}`;
+    ${sec('03', '종합 소견', '관찰자가 내린 공식 결론', `<p class="verdict">${f.verdict ? esc(f.verdict) : '<span class="nf">DATA NOT FOUND</span>'}</p>`)}
+    ${f.comment ? `<section class="memo"><p class="memo-h">// 보고서 끝에 남긴 ${esc(obsName(f))}의 사적인 한마디</p><p class="memo-t" data-type>${esc(f.comment)}</p></section>` : ''}`;
 }
 
 function tabDossier(f) {
   return `
-    ${sec('01', 'PERSONAL DATA', '기본 신상 정보', entList(f.profile, (p) => p.label))}
-    ${sec('05', 'RELATION MAP', '대인관계도 · 점선은 관찰자의 시선', `${relationMap(f)}${entList(f.relations, (r) => r.who)}`)}
-    ${sec('02', 'IDENTIFYING FEATURES', '외관 및 식별 특징', entList(f.look))}
-    ${sec('04', 'PREFERENCE / AVERSION', '선호 및 기피 요소', `<div class="two">
-      <div><p class="mini">+ 선호</p>${entList(f.likes)}</div>
-      <div><p class="mini">− 기피</p>${entList(f.dislikes)}</div></div>`)}`;
+    ${sec('01', '기본 신상', '', entList(f.profile, (p) => p.label))}
+    ${sec('02', '인간관계도', '가운데가 대상 · 점선은 관찰자의 시선', `${relationMap(f)}${entList(f.relations, (r) => r.who)}`)}
+    ${sec('03', '외모와 특징', '알아볼 수 있는 표시', entList(f.look))}
+    ${sec('04', '좋아하는 것 · 싫어하는 것', '', `<div class="two">
+      <div><p class="mini">+ 좋아하는 것</p>${entList(f.likes)}</div>
+      <div><p class="mini">− 싫어하는 것</p>${entList(f.dislikes)}</div></div>`)}`;
 }
 
 function tabNotes(f) {
   return `
-    ${sec('06', 'CCTV CAPTURE', '현장 관찰 기록', cctv(f.notes, body))}
-    ${sec('W', 'WIRETAP', '도청 기록 · ▶를 눌러 청취', wiretap(f.intercepts))}`;
+    ${sec('01', '미행 기록', '몰래 지켜본 장면', cctv(f.notes, body))}
+    ${sec('02', '도청 기록', '▶를 누르면 엿들은 말이 재생됩니다', wiretap(f.intercepts))}`;
 }
 
 function tabPsych(f) {
   const r = radar(f.psych);
   return `
-    ${sec('03', 'PROFILE', '성향 측정치 (관찰자 판단)', f.psych.length
+    ${sec('01', '성향 점수', '관찰자가 매긴 점수 · 0~100', f.psych.length
       ? `<div class="psy-wrap">${r}<ul class="psy wide">${f.psych.map((p) => `<li><span>${esc(p.k)}</span>${bar(p.v)}<b>${p.v}</b>${p.why ? `<small>${esc(p.why)}</small>` : ''}</li>`).join('')}</ul></div>`
-      : '<p class="nodata">DATA NOT FOUND</p>')}
-    ${sec('03', 'BEHAVIOR PATTERN', '성격 및 행동 양식', entList(f.traits))}`;
+      : NODATA)}
+    ${sec('02', '성격과 행동 습관', '', entList(f.traits))}`;
 }
 
 function tabClassified(f) {
   const errata = [...f.profile, ...f.look, ...f.traits, ...f.likes, ...f.dislikes, ...f.relations].filter((i) => i.st === 'error');
   return `
-    ${sec('C1', 'PRIVATE ANNOTATIONS', '조사자 비공개 메모 · 눌러서 해제', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : '<p class="nodata">DATA NOT FOUND</p>', 'sec-lock')}
-    ${sec('C2', 'SEALED', '봉인 문서', f.sealed.length ? f.sealed.map(sealed).join('') : '<p class="nodata">DATA NOT FOUND</p>', 'sec-lock')}
-    ${sec('C3', 'ERRATA', '검수 정정 기록', errata.length
+    ${sec('01', '관찰자의 속마음', '공식 기록에서 지운 메모 · 눌러서 보기', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}
+    ${sec('02', '봉인 문서', '열람 권한이 없는 문서', f.sealed.length ? f.sealed.map(sealed).join('') : NODATA, 'sec-lock')}
+    ${sec('03', '바로잡은 기록', '관찰자가 잘못 알고 있던 내용', errata.length
       ? (audit
         ? `<ul class="errata">${errata.map((e) => `<li><p class="e-old">${esc(e.text)}</p><p class="e-new">→ ${esc(e.real || 'DATA NOT FOUND')}</p></li>`).join('')}</ul>`
-        : `<p class="hint">정정 기록 ${errata.length}건이 있습니다. 위의 <b>검수 표시</b>를 켜면 보입니다.</p>`)
-      : '<p class="nodata">DATA NOT FOUND</p>')}`;
+        : `<p class="hint">관찰자가 잘못 안 내용이 ${errata.length}건 있습니다. 위의 <b>오해 바로잡기</b>를 켜면 보입니다.</p>`)
+      : NODATA)}`;
 }
 
 function tabIncidents(f, external) {
   return `
-    ${sec('06', 'INCIDENT TIMELINE', '특이 사건 및 돌발 상황', timeline(f.incidents, f.trigger))}
+    ${sec('01', '사건 일지', '대상과 관련해 벌어진 일', timeline(f.incidents, f.trigger))}
     ${external ? '' : `<div class="next-case">
       <p>새 사건이 생겼다면 사건 이름을 적고 같은 인물을 다시 검사하십시오. 이 보고서가 새 내용으로 바뀝니다.</p>
       <a class="btn" href="#/intake?trigger=1">사건 후속 보고서 만들기</a>
@@ -293,9 +294,15 @@ function tabCount(f, k) {
 
 function vFile(f, { external = false } = {}) {
   if (f) { f.intercepts ||= []; f.scribbles ||= []; }
-  if (!f) return head('FILE', 'FILE NOT FOUND', '존재하지 않는 보고서') + '<p class="nodata big">DATA NOT FOUND</p><div class="row-acts"><a class="btn" href="#/files">← 보고서 목록</a></div>';
+  if (!f) return head('보고서', '보고서를 찾을 수 없습니다') + '<p class="nodata big">DATA NOT FOUND</p><div class="row-acts"><a class="btn" href="#/files">← 보고서 목록</a></div>';
   const i = Math.max(0, TABS.findIndex(([k]) => k === tab));
-  const [k, en, ko] = TABS[i];
+  const [k, title, desc] = TABS[i];
+  const O = esc(obsName(f));
+  const P = esc(pcName(f));
+  const S = esc(f.subject);
+  const brief = f.mode === 2
+    ? `정체를 알 수 없는 <b class="o">${josa(O, '이', '가')}</b> <b class="p">${P}</b> 주변을 맴도는 <b class="s">${josa(S, '을', '를')}</b> 몰래 지켜보며 적은 기록입니다.`
+    : `<b class="o">${josa(O, '이', '가')}</b> <b class="p">${P}</b> 곁에 있는 <b class="s">${josa(S, '을', '를')}</b> 경계하며 몰래 적은 관찰 기록입니다.`;
   const prev = TABS[i - 1];
   const next = TABS[i + 1];
   const acc = accuracy(f);
@@ -305,33 +312,34 @@ function vFile(f, { external = false } = {}) {
     <header class="d-head">
       <div class="d-id-mini">${glyph(f.subject, { size: 92 })}<span class="scan" aria-hidden="true"></span></div>
       <div class="d-meta">
-        <p class="d-no">${esc(f.no || 'EO-EXT')} ${modeChip(f.mode)} <span>${(MODES[f.mode] || MODES[1]).name}</span></p>
+        <p class="d-no">${modeChip(f.mode)} <span>문서번호 ${esc(f.no || 'EO-EXT')}</span></p>
         <h1 class="d-title" tabindex="-1">${esc(f.subject)}<small>「${esc(f.title || '무제 보고서')}」</small></h1>
-        <p class="d-route"><span class="who">${esc(obsName(f))}</span><span class="arrow" aria-hidden="true">──▶</span><span class="who tgt">${esc(f.subject)}</span></p>
-        <p class="d-ctx">${f.mode === 2 ? `감시 범위: <b>${esc(pcName(f))}</b>의 주변` : `보호 대상: <b>${esc(pcName(f))}</b> · 대상은 그 곁의 인물`} · 관찰자 신분: ${esc(f.observer?.rel || '미상')}</p>
+        <p class="d-brief">${brief}</p>
+        <p class="d-ctx">관찰자 ${O}: ${esc(f.observer?.rel || '신분 미상')}</p>
       </div>
-      <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>${f.threat != null ? `THREAT ${f.threat}` : `CLASSIFIED · ${grade(f.trust)}`}</span></div>
+      <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>대외비 · 열람 주의</span></div>
     </header>
 
     <nav class="tabs" role="tablist" aria-label="보고서 항목">
-      ${TABS.map(([tk, ten, tko], n) => {
+      ${TABS.map(([tk, tt], n) => {
         const c = tabCount(f, tk);
-        return `<button class="tab" type="button" role="tab" data-tab="${tk}" aria-selected="${tk === k}"${tk === k ? '' : ' tabindex="-1"'}><span class="tab-no">${String(n + 1).padStart(2, '0')}</span><span class="tab-en">${ten}</span><span class="tab-ko">${tko}${c ? ` <i>${c}</i>` : ''}</span></button>`;
+        return `<button class="tab" type="button" role="tab" data-tab="${tk}" aria-selected="${tk === k}"${tk === k ? '' : ' tabindex="-1"'}><span class="tab-no">${String(n + 1).padStart(2, '0')}</span><span class="tab-t">${tt}${c ? ` <i>${c}</i>` : ''}</span></button>`;
       }).join('')}
     </nav>
 
     <div class="tab-head">
-      <p><b>${String(i + 1).padStart(2, '0')} / ${String(TABS.length).padStart(2, '0')}</b> ${en} · ${ko}</p>
-      <span class="tab-tools">
-        ${acc.error && !audit ? `<span class="d-hint">오인 ${acc.error}건 검출</span>` : ''}
-        <button class="chip-btn" type="button" data-act="audit" aria-pressed="${audit}">검수 표시 ${audit ? 'ON' : 'OFF'}</button>
-      </span>
+      <div><p class="tab-title"><b>${i + 1} / ${TABS.length}</b> ${title}</p><p class="tab-desc">${desc}</p></div>
+      ${acc.error ? `<span class="tab-tools">
+        <span class="d-hint">${audit ? `잘못 안 내용 ${acc.error}건을 바로잡아 표시 중` : `관찰자가 잘못 안 내용 ${acc.error}건`}</span>
+        <button class="chip-btn" type="button" data-act="audit" aria-pressed="${audit}">오해 바로잡기 ${audit ? '끄기' : '켜기'}</button>
+      </span>` : ''}
     </div>
+    ${k === 'dossier' || k === 'psychological' ? `<p class="legend-line"><span class="st st-fact">확인</span>직접 본 사실 <span class="st st-guess">추정</span>관찰자의 짐작 <span class="st st-unknown">미확인</span>알아내지 못함${audit ? ' <span class="st st-error">오인</span>잘못 안 내용' : ''}</p>` : ''}
     <div class="tab-body" role="tabpanel">${TAB_VIEW[k](f, external)}</div>
 
     <nav class="pager" aria-label="이전 · 다음 항목">
-      ${prev ? `<button class="btn" type="button" data-tab="${prev[0]}">← ${prev[2]}</button>` : '<span></span>'}
-      ${next ? `<button class="btn solid" type="button" data-tab="${next[0]}">다음: ${next[2]} →</button>` : (external ? '' : '<a class="btn solid" href="#/files">보고서 목록으로</a>')}
+      ${prev ? `<button class="btn" type="button" data-tab="${prev[0]}">← ${prev[1]}</button>` : '<span></span>'}
+      ${next ? `<button class="btn solid" type="button" data-tab="${next[0]}">다음: ${next[1]} →</button>` : (external ? '' : '<a class="btn solid" href="#/files">보고서 목록으로</a>')}
     </nav>
 
     <footer class="d-foot">
@@ -389,11 +397,11 @@ function vIntake(q, { first = false } = {}) {
       </details>`;
   const top = first
     ? `<header class="vh first-h">
-        <p class="vh-no">EYES ONLY · OBSERVATION RECORD</p>
-        <h1 class="vh-title" tabindex="-1"><span class="en">EYES ONLY</span><span class="ko">비밀 인물 조사 및 관찰 기록</span></h1>
+        <p class="vh-no">비밀 인물 조사 및 관찰 기록</p>
+        <h1 class="vh-title" tabindex="-1"><span class="en">EYES ONLY</span></h1>
         <p class="vh-line">그 사람 곁에 누가 있는지 지켜보는 눈. 그리고 그 눈을 지켜보는 또 다른 눈.</p>
       </header>`
-    : `${store.all().length ? '<p class="back"><a class="lnk" href="#/files">← 보고서 목록</a></p>' : ''}${head('NEW FILE', 'NEW OBSERVATION', '새 관찰 보고서')}`;
+    : `${store.all().length ? '<p class="back"><a class="lnk" href="#/files">← 보고서 목록</a></p>' : ''}${head('새 보고서', '새 관찰 보고서 만들기')}`;
   return `${top}
   <form class="intake" id="intake" autocomplete="off">
     <section class="step">
@@ -402,7 +410,7 @@ function vIntake(q, { first = false } = {}) {
         ${[1, 2].map((k) => `<label class="mode-card pick">
           <input type="radio" name="mode" value="${k}"${m === k ? ' checked' : ''}>
           <span class="mc-code">${MODES[k].code}</span>
-          <b class="mc-name">${MODES[k].name}</b>
+          <b class="mc-name kr">${MODES[k].label}</b>
           <span class="mc-desc">${MODES[k].desc}</span>
         </label>`).join('')}
       </div>
@@ -686,7 +694,7 @@ document.addEventListener('click', async (e) => {
     const y = window.scrollY;
     showTab(tab);
     window.scrollTo(0, y);
-    toast(audit ? '검수 표시 ON · 사실과 다른 기록을 정정해 보여 줍니다.' : '검수 표시 OFF · 관찰자가 쓴 그대로 보여 줍니다.');
+    toast(audit ? '관찰자가 잘못 안 내용을 바로잡아 보여 줍니다.' : '관찰자가 쓴 그대로 보여 줍니다.');
   } else if (act === 'play') {
     const tap = b.closest('.tap');
     const q = $('.tap-q', tap);

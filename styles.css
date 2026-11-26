@@ -882,3 +882,48 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
   .ro-threat { grid-template-columns: minmax(0, 1fr) 130px; column-gap: 12px; }
   .ro .meter.ro-bar, .ro .segbar { margin: 6px 0 4px; }
 }
+
+/* =========================================================
+   한국어 우선 제목 · 상황 설명
+   ========================================================= */
+.vh-title.kr { font-family: var(--kr); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px); line-height: 1.3; }
+.mode { font-family: var(--kr); font-size: 12.5px; font-weight: 700; letter-spacing: 0; padding: 1px 8px; }
+.mc-name.kr { font-family: var(--kr); font-size: 21px; font-weight: 700; }
+.sh-t { font-size: 18px; font-weight: 700; }
+.sh-ko { font-size: 13px; }
+.sh-no { font-size: 17px; }
+.d-no { display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: var(--kr); letter-spacing: 0; }
+.d-no .mode { margin: 0; }
+.d-brief { font-size: 17px; line-height: 1.7; color: var(--ink2); max-width: 40em; }
+.d-brief b { color: var(--ink); }
+.d-brief b.o { color: var(--amber); text-shadow: 0 0 6px rgba(255, 198, 110, .35); }
+.d-brief b.s { background: rgba(157, 255, 201, .14); padding: 0 4px; }
+.d-ctx { font-size: 13.5px; color: var(--dim); }
+.stamp span { font-family: var(--kr); font-size: 12px; letter-spacing: .08em; }
+.tab { gap: 2px; padding: 12px 14px; }
+.tab-t { font-size: 15.5px; font-weight: 700; white-space: nowrap; }
+.tab-t i { font-style: normal; font-family: var(--px); font-size: 16px; color: var(--dim); font-weight: 400; }
+.tab[aria-selected="true"] .tab-t i { color: var(--bg); }
+.tab-head { align-items: flex-end; }
+.tab-title { font-size: 20px; font-weight: 700; color: var(--ink); }
+.tab-title b { font-family: var(--px); font-weight: 400; font-size: 20px; color: var(--dim); margin-right: 8px; }
+.tab-desc { font-size: 14px; color: var(--ink2); margin-top: 2px; }
+.legend-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 13px; color: var(--dim); }
+.legend-line .st { margin-left: 8px; }
+.legend-line .st:first-child { margin-left: 0; }
+.callout-k { font-family: var(--kr); font-size: 14px; letter-spacing: 0; font-weight: 700; }
+.ro-k { font-family: var(--kr); font-size: 15px; font-weight: 700; letter-spacing: 0; color: var(--ink); }
+.ro-k span { display: block; margin: 2px 0 0; font-weight: 400; }
+.rn-tag { font-family: var(--kr); font-size: 11.5px; letter-spacing: .02em; }
+.tap-h span:first-child { font-family: var(--kr); font-size: 14px; font-weight: 700; letter-spacing: 0; }
+.tl-n { font-family: var(--kr); font-size: 13px; letter-spacing: 0; }
+.nodata small { margin-left: 6px; font-family: var(--kr); font-size: 13px; color: var(--dim); }
+.file-threat em { font-family: var(--kr); font-size: 13px; font-weight: 700; letter-spacing: 0; }
+.file-tab { font-size: 15px; }
+@media (max-width: 880px) {
+  .tab { min-width: 108px; }
+}
+@media (max-width: 640px) {
+  .d-brief { font-size: 15.5px; }
+  .tab-title { font-size: 18px; }
+}
