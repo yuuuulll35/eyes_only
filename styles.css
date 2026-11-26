@@ -1046,3 +1046,12 @@ button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { bac
 .impression.final { border-left-color: var(--amber); color: #ffe2b0; text-shadow: 0 0 5px rgba(255, 198, 110, .25); font-weight: 700; }
 .psy .note-memo { margin-top: 0; }
 .psy .note-memo b { font-family: var(--kr); font-size: 13.5px; font-weight: 700; text-align: left; color: var(--amber); }
+
+/* 목록 카드의 삭제 */
+.file-wrap { position: relative; display: flex; }
+.file-wrap > .file { flex: 1; }
+.file-del { position: absolute; top: -24px; right: 0; height: 24px; padding: 0 10px; font-size: 12.5px; color: var(--dim); border: 1px solid transparent; }
+.file-del:hover, .file-del:focus-visible { color: var(--red); border-color: rgba(255, 97, 87, .5); }
+.d-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.d-top .back { margin: 0; }
+.foot { justify-content: center; }

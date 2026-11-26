@@ -135,7 +135,8 @@ function vFiles() {
   return `${head('EYES ONLY · 보관함', '관찰 보고서 목록',
     `<p class="vh-line">인물 한 명당 보고서 하나. <b>파일을 눌러 열람하십시오.</b> 같은 인물을 다시 검사하면 그 인물의 보고서가 새 내용으로 바뀝니다.</p>`)}
   <section class="files" aria-label="보고서">
-    ${list.map((f) => `<a class="file m${f.mode}" href="${fileLink(f)}">
+    ${list.map((f) => `<div class="file-wrap">
+    <a class="file m${f.mode}" href="${fileLink(f)}">
       <span class="file-tab">${esc(f.no)}</span>
       <span class="file-in">
         <span class="file-g">${glyph(f.subject, { size: 78 })}</span>
@@ -150,7 +151,9 @@ function vFiles() {
         <span class="file-threat"><em>위험도</em>${f.threat != null ? `${bar(f.threat, 'threat')}<b>${f.threat}</b>` : '<b>—</b>'}</span>
         <span class="file-open">열람 →</span>
       </span>
-    </a>`).join('')}
+    </a>
+    <button class="file-del" type="button" data-act="del" data-id="${esc(f.id)}" aria-label="${esc(f.subject)} 보고서 삭제">삭제</button>
+    </div>`).join('')}
     <a class="file file-new" href="#/intake">
       <span class="file-plus" aria-hidden="true">+</span>
       <b>새 보고서</b>
@@ -311,7 +314,12 @@ function vFile(f, { external = false } = {}) {
   const acc = accuracy(f);
 
   return `<article class="dossier" data-mode="${f.mode}">
-    <p class="back">${external ? '<span class="trig">외부에서 받은 보고서</span>' : '<a class="lnk" href="#/files">← 보고서 목록</a>'}</p>
+    <div class="d-top">
+      <p class="back">${external ? '<span class="trig">외부에서 받은 보고서</span>' : '<a class="lnk" href="#/files">← 보고서 목록</a>'}</p>
+      ${external
+        ? '<button class="btn solid sm" type="button" data-act="keep">내 보관함에 넣기</button>'
+        : `<button class="btn sm" type="button" data-act="share" data-id="${esc(f.id)}">공유 링크 복사</button>`}
+    </div>
     <header class="d-head">
       <div class="d-id-mini">${glyph(f.subject, { size: 92 })}<span class="scan" aria-hidden="true"></span></div>
       <div class="d-meta">
@@ -358,12 +366,6 @@ function vFile(f, { external = false } = {}) {
       ${next ? `<button class="btn solid" type="button" data-tab="${next[0]}">다음: ${next[1]} →</button>` : (external ? '' : '<a class="btn solid" href="#/files">보고서 목록으로</a>')}
     </nav>
 
-    <footer class="d-foot">
-      ${external
-        ? '<button class="btn solid" type="button" data-act="keep">내 보관함에 넣기</button>'
-        : `<button class="btn" type="button" data-act="share" data-id="${esc(f.id)}">공유 링크 복사</button>
-           <button class="btn danger" type="button" data-act="del" data-id="${esc(f.id)}">이 보고서 파기</button>`}
-    </footer>
   </article>`;
 }
 
@@ -829,10 +831,10 @@ document.addEventListener('click', async (e) => {
     toast((await copyText(url)) ? '공유 링크를 복사했습니다. 서버에 저장되지 않습니다.' : '복사하지 못했습니다.');
   } else if (act === 'del') {
     const f = store.byId(b.dataset.id);
-    if (!f || !confirm(`${f.subject}의 보고서를 파기합니다. 되돌릴 수 없습니다.`)) return;
+    if (!f || !confirm(`${f.subject}의 보고서를 삭제합니다. 되돌릴 수 없습니다.`)) return;
     store.remove(f.id);
-    toast('보고서를 파기했습니다.');
-    location.hash = '#/files';
+    toast(`${f.subject}의 보고서를 삭제했습니다.`);
+    if (location.hash === '#/files' || !store.all().length) route(); else location.hash = '#/files';
   } else if (act === 'keep') {
     if (!shared) return;
     const { no, at, trigger, ...data } = shared;
