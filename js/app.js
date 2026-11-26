@@ -344,7 +344,7 @@ function vFile(f, { external = false } = {}) {
     ${!canJudge(f) ? `<div class="judge">
       <div class="judge-t">
         <p class="judge-h">사실 여부 판정 대기</p>
-        <p class="judge-d">${OJ} 쓴 기록이 사실인지는 아직 확인되지 않음 · ${josa(O, '을', '를')} 몰래 지켜본 제3자의 감시 기록이 있어야 판정 가능</p>
+        <p class="judge-d">관찰 기록이 진실인지 판단해 보자</p>
       </div>
       ${external ? '' : `<a class="btn solid" href="#/intake?mode=2&npc=${encodeURIComponent(obsName(f))}&pc=${encodeURIComponent(f.pc || '')}&from=${encodeURIComponent(f.id)}">사실 여부 판정하기 →</a>`}
     </div>` : acc.error ? `<div class="d-controls">
