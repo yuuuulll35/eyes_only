@@ -228,7 +228,7 @@ function tabOverview(f) {
     <div class="ov-split${f.scribbles.length ? '' : ' single'}">
       ${sec('01', '핵심 신상', '', entList(f.profile.slice(0, 4), (p) => p.label))}
       ${f.scribbles.length ? `<section class="margin">
-        <h2 class="sh"><span class="sh-no">02</span><span class="sh-t">혼잣말</span><span class="sh-ko">보고서에는 못 쓴 ${esc(obsName(f))}의 속말</span></h2>
+        <h2 class="sh"><span class="sh-no">02</span><span class="sh-t">혼잣말</span></h2>
         ${chatLog(f.scribbles, obsName(f), f.mode)}
       </section>` : ''}
     </div>
