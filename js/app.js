@@ -21,8 +21,8 @@ const TABS = [
   ['dossier', '신상 정보', '관찰자가 알아낸 대상의 신상과 인간관계입니다.'],
   ['field_notes', '미행·도청', '관찰자가 몰래 지켜본 장면과 엿들은 말입니다.'],
   ['psychological', '성격 분석', '관찰자가 판단한 대상의 성향과 습관입니다.'],
-  ['classified', '숨긴 기록', '공식 보고서에서 뺀 관찰자의 속마음과 봉인된 문서입니다.'],
   ['incident_log', '사건 일지', '대상과 관련해 벌어진 일들을 순서대로 봅니다.'],
+  ['classified', '숨긴 기록', '공식 보고서에서 뺀 관찰자의 속마음과 봉인된 문서입니다.'],
 ];
 
 const ST = {
@@ -169,7 +169,7 @@ function vFiles() {
 function redacted(text, key) {
   const len = Math.max(6, Math.min(40, [...text].length));
   return `<div class="redact" data-key="${esc(key)}">
-    <p class="redact-t" data-text="${esc(text)}"><span class="bar" style="--n:${len}"></span></p>
+    <p class="redact-t" data-text="${esc(text)}"><span class="rbar" style="--n:${len}"></span></p>
     <button class="chip-btn" type="button" data-act="reveal">열람 해제</button>
   </div>`;
 }
@@ -718,7 +718,7 @@ document.addEventListener('click', async (e) => {
     const t = $('.redact-t', box);
     if (box.classList.contains('open')) {
       box.classList.remove('open');
-      t.innerHTML = `<span class="bar" style="--n:${Math.max(6, Math.min(40, [...t.dataset.text].length))}"></span>`;
+      t.innerHTML = `<span class="rbar" style="--n:${Math.max(6, Math.min(40, [...t.dataset.text].length))}"></span>`;
       b.textContent = '열람 해제';
     } else {
       box.classList.add('open');
