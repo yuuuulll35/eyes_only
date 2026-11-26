@@ -52,7 +52,6 @@ export function buildPrompt({ mode = 1, observer = '', subject = '', pc = '', tr
   if (mode === 2) {
     const n = sb || 'NPC';
     brief = `정체불명의 제3자가 ${josa(n, '을', '를')} 지켜보며 쓴 기밀 조사 보고서를 만든다. ${josa(n, '은', '는')} ${P} 주변을 감시하듯 맴돌며 ${P} 곁의 인물들을 살피는 중이다. 관찰자는 정체를 밝히지 않고 코드명만 쓴다. ${n}의 감시 동선과 행동 패턴, ${josa(P, '과', '와')} 그 주변 인물을 대하는 태도, 그렇게까지 하는 이유를 추적하고 추측한다.`;
-    if (!sb) brief += ` 감시 대상 NPC는 등장하는 NPC 중 한 명을 임의로 고른다. 여럿이면 ${P} 주변을 가장 집요하게 맴도는 인물로 한다.`;
   } else {
     const o = ob || 'NPC';
     const t = sb || '인물 한 명';

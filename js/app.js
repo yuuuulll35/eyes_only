@@ -321,7 +321,7 @@ try { Object.assign(draft, JSON.parse(store.pref.get('draft') || '{}')); } catch
 const promptArgs = () => ({
   mode: draft.mode,
   observer: draft.mode === 1 && draft.obsPick === 'name' ? draft.observer : '',
-  subject: draft.subPick === 'name' ? draft.subject : '',
+  subject: draft.mode === 1 && draft.subPick === 'name' ? draft.subject : '',
   pc: draft.pc,
   trigger: draft.trigger,
 });
@@ -349,6 +349,13 @@ function vIntake(q, { first = false } = {}) {
   const wantTrig = q.get('trigger') === '1';
   const m = draft.mode;
   const openOpt = wantTrig || !!(draft.pc || draft.trigger);
+  const opt = `<details class="opt"${openOpt ? ' open' : ''}>
+        <summary>추가 설정 <em>선택 · PC 이름, 계기 사건</em></summary>
+        <div class="fields">
+          <label class="fld"><span>PC 이름 <em>비우면 PC</em></span><input name="pc" maxlength="20" value="${esc(draft.pc)}" placeholder="예: 윤해리"></label>
+          <label class="fld"><span>계기 사건 <em>특정 사건 이후의 보고서로</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
+        </div>
+      </details>`;
   const top = first
     ? `<header class="vh first-h">
         <p class="vh-no">EYES ONLY · OBSERVATION RECORD</p>
@@ -357,12 +364,6 @@ function vIntake(q, { first = false } = {}) {
       </header>`
     : `${store.all().length ? '<p class="back"><a class="lnk" href="#/files">← 보고서 목록</a></p>' : ''}${head('NEW FILE', 'NEW OBSERVATION', '새 관찰 보고서')}`;
   return `${top}
-  <ol class="how" aria-label="사용 순서">
-    <li><b>1</b>관찰 방식 고르기</li>
-    <li><b>2</b>누가 누구를 볼지 정하기</li>
-    <li><b>3</b>OOC 보내고 답 붙여넣기</li>
-    <li><b>4</b>인물 보고서 열람</li>
-  </ol>
   <form class="intake" id="intake" autocomplete="off">
     <section class="step">
       <h2 class="sh"><span class="sh-no">01</span><span class="sh-ko big">관찰 방식 고르기</span></h2>
@@ -374,28 +375,20 @@ function vIntake(q, { first = false } = {}) {
           <span class="mc-desc">${MODES[k].desc}</span>
         </label>`).join('')}
       </div>
+      ${m === 2 ? opt : ''}
     </section>
-
-    <section class="step">
-      <h2 class="sh"><span class="sh-no">02</span><span class="sh-ko big">${m === 1 ? '누가 누구를 관찰할까' : '누구를 감시할까'}</span></h2>
+    ${m === 1 ? `<section class="step">
+      <h2 class="sh"><span class="sh-no">02</span><span class="sh-ko big">누가 누구를 관찰할까</span></h2>
       <div class="picks">
-        ${m === 1
-          ? pickRow({ key: 'observer', pickKey: 'obsPick', label: '관찰자 NPC', autoLabel: '임의', autoDesc: '등장 NPC 중 PC 곁을 가장 경계할 만한 인물을 AI가 고릅니다.', ph: '예: 차도현' })
-            + '<span class="pick-arrow" aria-hidden="true">──▶</span>'
-            + pickRow({ key: 'subject', pickKey: 'subPick', label: '관찰 대상 (PC 곁의 인물)', autoLabel: '임의 생성', autoDesc: 'PC 곁의 인물 중 한 명을 AI가 고르고, 마땅한 인물이 없으면 새로 만듭니다.', ph: '예: 강지안' })
-          : pickRow({ key: 'subject', pickKey: 'subPick', label: '감시 중인 NPC', autoLabel: '임의', autoDesc: '등장 NPC 중 PC 주변을 가장 집요하게 맴도는 인물을 AI가 고릅니다.', ph: '예: 차도현' })}
+        ${pickRow({ key: 'observer', pickKey: 'obsPick', label: '관찰자 NPC', autoLabel: '임의', autoDesc: '등장 NPC 중 PC 곁을 가장 경계할 만한 인물을 AI가 고릅니다.', ph: '예: 차도현' })}
+        <span class="pick-arrow" aria-hidden="true">──▶</span>
+        ${pickRow({ key: 'subject', pickKey: 'subPick', label: '관찰 대상 (PC 곁의 인물)', autoLabel: '임의 생성', autoDesc: 'PC 곁의 인물 중 한 명을 AI가 고르고, 마땅한 인물이 없으면 새로 만듭니다.', ph: '예: 강지안' })}
       </div>
-      <details class="opt"${openOpt ? ' open' : ''}>
-        <summary>추가 설정 <em>선택 · PC 이름, 계기 사건</em></summary>
-        <div class="fields">
-          <label class="fld"><span>PC 이름 <em>비우면 PC</em></span><input name="pc" maxlength="20" value="${esc(draft.pc)}" placeholder="예: 윤해리"></label>
-          <label class="fld"><span>계기 사건 <em>특정 사건 이후의 보고서로</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
-        </div>
-      </details>
-    </section>
+      ${opt}
+    </section>` : ''}
 
     <section class="step">
-      <h2 class="sh"><span class="sh-no">03</span><span class="sh-ko big">OOC 보내고 답 붙여넣기</span></h2>
+      <h2 class="sh"><span class="sh-no">${m === 1 ? '03' : '02'}</span><span class="sh-ko big">OOC 보내고 답 붙여넣기</span></h2>
       <p class="hint">OOC를 복사해 롤플 채팅에 보내고, 받은 답을 통째로 복사한 뒤 답 붙여넣기를 누르십시오.</p>
       <div class="flow">
         <button class="btn solid" type="button" data-act="copyprompt">OOC 복사</button>

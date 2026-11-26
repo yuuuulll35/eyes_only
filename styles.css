@@ -601,7 +601,7 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
 .vh-line b { color: var(--ink); }
 
 /* 사용 순서 */
-.how { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; counter-reset: how; }
+.how { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
 .how li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); font-size: 14px; color: var(--ink2); background: var(--panel); }
 .how b { flex: none; display: grid; place-items: center; width: 26px; height: 26px; background: var(--ink); color: var(--bg); text-shadow: none; font-family: var(--px); font-weight: 400; font-size: 20px; }
 .sh-ko.big { font-size: 18px; font-weight: 700; color: var(--ink); }
@@ -672,7 +672,7 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
   .tabs { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 calc(var(--pad) * -1); border-left: 0; border-right: 0; }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { flex: none; min-width: 118px; }
-  .how { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .how { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .files { grid-template-columns: 1fr; }
