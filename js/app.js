@@ -473,19 +473,18 @@ function vIntake(q, { first = false } = {}) {
         <span class="flow-arrow" aria-hidden="true">──▶</span>
         <button class="btn solid" type="button" data-act="pasteclip">답 붙여넣기</button>
       </div>
+      <div class="flow-sub">
+        <button class="btn" type="button" data-act="manual">직접 붙여넣기</button>
+        <button class="btn" type="button" data-act="peek" aria-expanded="false"><span class="peek-l">OOC 내용 보기</span> <span class="count" id="pLen"></span></button>
+      </div>
       <div class="manual" id="manual"${draft.answer ? '' : ' hidden'}>
         <textarea name="answer" id="answer" rows="8" spellcheck="false" placeholder="채팅에서 받은 답을 여기에 붙여 넣기" aria-label="채팅에서 받은 답">${esc(draft.answer)}</textarea>
-        <div class="row-acts left">
+        <div class="manual-acts">
           <button class="btn solid" type="submit">보고서 만들기</button>
-          <button class="chip-btn" type="button" data-act="clearans">지우기</button>
+          <button class="btn" type="button" data-act="clearans">지우기</button>
         </div>
       </div>
       <p class="err" id="err" role="alert" hidden></p>
-      <p class="minor">
-        <button class="chip-btn" type="button" data-act="manual">직접 붙여넣기</button>
-        <button class="chip-btn" type="button" data-act="peek" aria-expanded="false">OOC 내용 보기</button>
-        <span class="count" id="pLen"></span>
-      </p>
       <pre class="prompt" id="promptView" hidden></pre>
     </section>
     ${first ? '<p class="first-sample"><button class="lnk" type="button" data-act="samples">예시 보고서로 먼저 둘러보기</button></p>' : ''}
@@ -835,7 +834,7 @@ document.addEventListener('click', async (e) => {
     const pv = $('#promptView');
     pv.hidden = !pv.hidden;
     b.setAttribute('aria-expanded', String(!pv.hidden));
-    b.textContent = pv.hidden ? 'OOC 내용 보기' : 'OOC 내용 닫기';
+    $('.peek-l', b).textContent = pv.hidden ? 'OOC 내용 보기' : 'OOC 내용 닫기';
   } else if (act === 'pasteclip') {
     try {
       const t = await navigator.clipboard.readText();

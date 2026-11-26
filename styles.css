@@ -1085,3 +1085,16 @@ button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { bac
 .tools > span { margin-right: 4px; }
 .tools .btn.sm { min-height: 36px; font-size: 13px; }
 .tools.top { justify-content: flex-end; padding-top: 0; border-top: 0; margin-top: -6px; }
+
+/* 접수 버튼 정돈: 같은 높이, 같은 너비 체계 */
+.flow .btn { min-height: 52px; }
+.flow-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.flow-sub .btn, .manual-acts .btn { min-height: 48px; font-size: 14px; }
+.flow-sub .count { font-size: 15px; color: var(--dim); margin-left: 4px; }
+.manual { margin-top: 14px; }
+.manual-acts { display: grid; grid-template-columns: 1fr 160px; gap: 12px; margin-top: 12px; }
+@media (max-width: 640px) {
+  .manual-acts { grid-template-columns: 1fr 110px; }
+}
+.flow-sub .btn { white-space: nowrap; padding: 0 10px; }
+@media (max-width: 640px) { .flow-sub .count { display: none; } }
