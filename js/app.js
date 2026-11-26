@@ -273,11 +273,7 @@ function tabClassified(f) {
 
 function tabIncidents(f, external) {
   return `
-    ${sec('01', '사건 일지', '대상과 관련해 벌어진 일', timeline(f.incidents, f.trigger))}
-    ${external ? '' : `<div class="next-case">
-      <p>새 사건이 생겼다면 사건 이름을 적고 같은 인물을 다시 검사하십시오. 이 보고서가 새 내용으로 바뀝니다.</p>
-      <a class="btn" href="#/intake?trigger=1">사건 후속 보고서 만들기</a>
-    </div>`}`;
+    ${sec('01', '사건 타임라인', '오래된 일부터 순서대로', timeline(f.incidents, f.trigger))}`;
 }
 
 const TAB_VIEW = { overview: tabOverview, dossier: tabDossier, field_notes: tabNotes, psychological: tabPsych, classified: tabClassified, incident_log: tabIncidents };
@@ -328,13 +324,24 @@ function vFile(f, { external = false } = {}) {
     </nav>
 
     <div class="tab-head">
-      <div><p class="tab-title"><b>${i + 1} / ${TABS.length}</b> ${title}</p><p class="tab-desc">${desc}</p></div>
-      ${acc.error ? `<span class="tab-tools">
-        <span class="d-hint">${audit ? `잘못 안 내용 ${acc.error}건을 바로잡아 표시 중` : `관찰자가 잘못 안 내용 ${acc.error}건`}</span>
-        <button class="chip-btn" type="button" data-act="audit" aria-pressed="${audit}">오해 바로잡기 ${audit ? '끄기' : '켜기'}</button>
-      </span>` : ''}
+      <div class="th-main">
+        <p class="tab-step">${i + 1} / ${TABS.length}</p>
+        <h2 class="tab-title">${title}</h2>
+        <p class="tab-desc">${desc}</p>
+      </div>
+      ${acc.error ? `<div class="th-side">
+        <button class="switch" type="button" role="switch" data-act="audit" aria-checked="${audit}">
+          <span class="sw-l">오해 바로잡기</span><span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-s">${audit ? 'ON' : 'OFF'}</span>
+        </button>
+        <p class="sw-c">${audit ? `잘못 안 내용 ${acc.error}건을 바로잡아 보여 주는 중` : `관찰자가 잘못 안 내용 ${acc.error}건이 숨어 있음`}</p>
+      </div>` : ''}
     </div>
-    ${k === 'dossier' || k === 'psychological' ? `<p class="legend-line"><span class="st st-fact">확인</span>직접 본 사실 <span class="st st-guess">추정</span>관찰자의 짐작 <span class="st st-unknown">미확인</span>알아내지 못함${audit ? ' <span class="st st-error">오인</span>잘못 안 내용' : ''}</p>` : ''}
+    ${k === 'dossier' || k === 'psychological' ? `<dl class="legend-line" aria-label="표시 안내">
+      <div><dt><span class="st st-fact">확인</span></dt><dd>직접 본 사실</dd></div>
+      <div><dt><span class="st st-guess">추정</span></dt><dd>관찰자의 짐작</dd></div>
+      <div><dt><span class="st st-unknown">미확인</span></dt><dd>알아내지 못함</dd></div>
+      ${audit ? '<div><dt><span class="st st-error">오인</span></dt><dd>잘못 안 내용</dd></div>' : ''}
+    </dl>` : ''}
     <div class="tab-body" role="tabpanel">${TAB_VIEW[k](f, external)}</div>
 
     <nav class="pager" aria-label="이전 · 다음 항목">

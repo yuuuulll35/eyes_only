@@ -937,3 +937,40 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
   .d-brief { font-size: 15.5px; }
   .tab-title { font-size: 18px; }
 }
+
+/* =========================================================
+   탭 머리 · 섹션 제목 정돈
+   ========================================================= */
+.tab-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px 24px; padding-bottom: 14px; }
+.th-main { min-width: 0; }
+.tab-head .tab-step { font-family: var(--px); font-size: 18px; color: var(--dim); letter-spacing: .08em; line-height: 1; }
+.tab-head .tab-title { margin-top: 4px; font-size: 22px; font-weight: 700; line-height: 1.3; }
+.tab-head .tab-desc { margin-top: 4px; font-size: 14px; color: var(--ink2); }
+.th-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
+.switch { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border: 1px solid var(--line2); }
+.switch:hover { border-color: var(--ink); }
+.sw-l { font-size: 14px; font-weight: 700; }
+.sw-track { position: relative; width: 38px; height: 20px; border: 1px solid var(--ink2); }
+.sw-track i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: var(--dim); transition: transform .2s var(--ease), background .2s; }
+.switch[aria-checked="true"] { border-color: var(--amber); }
+.switch[aria-checked="true"] .sw-track { border-color: var(--amber); }
+.switch[aria-checked="true"] .sw-track i { transform: translateX(18px); background: var(--amber); }
+.sw-s { font-family: var(--px); font-size: 17px; width: 2.2em; text-align: left; color: var(--dim); }
+.switch[aria-checked="true"] .sw-s { color: var(--amber); }
+.tab-head .sw-c { font-size: 12.5px; color: var(--amber); max-width: 260px; }
+
+.legend-line { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0; padding: 10px 14px; border: 1px dashed var(--line); }
+.legend-line > div { display: flex; align-items: center; gap: 8px; }
+.legend-line dt, .legend-line dd { margin: 0; }
+.legend-line dd { font-size: 13px; color: var(--ink2); }
+.legend-line .st { margin-left: 0; }
+
+.sh { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 2px; }
+.sh-ko { grid-column: 2; font-size: 13px; color: var(--dim); }
+
+@media (max-width: 640px) {
+  .tab-head { grid-template-columns: 1fr; }
+  .th-side { justify-self: end; }
+  .tab-head .tab-title { font-size: 20px; }
+  .legend-line { gap: 6px 14px; }
+}
