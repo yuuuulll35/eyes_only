@@ -684,3 +684,25 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
   .how li { font-size: 13px; padding: 8px 10px; }
   .file-threat { grid-template-columns: auto 64px auto; }
 }
+
+/* 관찰자 · 대상 지정 */
+.picks { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 12px; }
+.picks:has(> .pick-row:only-child) { grid-template-columns: minmax(0, 1fr); max-width: 460px; }
+.pick-row { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--line2); background: rgba(0, 0, 0, .2); min-width: 0; }
+.pick-l { font-size: 15px; font-weight: 700; }
+.pick-arrow { align-self: center; font-family: var(--px); font-size: 24px; color: var(--dim); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line2); }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 10px; font-size: 14px; color: var(--ink2); transition: background .15s; }
+.seg label + label span { border-left: 1px solid var(--line2); }
+.seg label:hover span { background: rgba(157, 255, 201, .07); }
+.seg input:checked + span { background: var(--ink); color: var(--bg); text-shadow: none; font-weight: 700; }
+.seg input:focus-visible + span { outline: 2px solid var(--ink); outline-offset: 2px; }
+.pick-in { width: 100%; background: rgba(0, 0, 0, .35); border: 1px solid var(--line2); color: var(--ink); padding: 10px 12px; font-size: 16px; border-radius: 0; text-shadow: var(--glow); -webkit-appearance: none; appearance: none; }
+.pick-in:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.pick-d { font-size: 13px; color: var(--dim); min-height: 44px; }
+@media (max-width: 640px) {
+  .picks { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .pick-arrow { justify-self: center; transform: rotate(90deg); line-height: 1; }
+}
