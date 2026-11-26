@@ -474,7 +474,7 @@ function vIntake(q, { first = false } = {}) {
         <button class="btn solid" type="button" data-act="pasteclip">답 붙여넣기</button>
       </div>
       <div class="flow-sub">
-        <button class="btn" type="button" data-act="manual">직접 붙여넣기</button>
+        <button class="btn" type="button" data-act="manual" aria-expanded="${draft.answer ? 'true' : 'false'}" aria-controls="manual">${draft.answer ? '입력란 닫기' : '직접 붙여넣기'}</button>
         <button class="btn" type="button" data-act="peek" aria-expanded="false"><span class="peek-l">OOC 내용 보기</span> <span class="count" id="pLen"></span></button>
       </div>
       <div class="manual" id="manual"${draft.answer ? '' : ' hidden'}>
@@ -531,14 +531,25 @@ function bindIntake() {
   });
 }
 
+function setManual(open, focus = true) {
+  const box = $('#manual');
+  const btn = $('[data-act="manual"]');
+  if (!box) return;
+  box.hidden = !open;
+  if (btn) {
+    btn.textContent = open ? '입력란 닫기' : '직접 붙여넣기';
+    btn.setAttribute('aria-expanded', String(open));
+  }
+  if (open && focus) $('#answer').focus();
+}
+
 function submitAnswer() {
   const err = $('#err');
   const r = parse(draft.answer);
   if (r.error) {
     err.textContent = r.error;
     err.hidden = false;
-    const box = $('#manual');
-    if (box && draft.answer) box.hidden = false;
+    if ($('#manual') && draft.answer) setManual(true, false);
     return;
   }
   err.hidden = true;
@@ -845,12 +856,10 @@ document.addEventListener('click', async (e) => {
       submitAnswer();
     } catch {
       toast('클립보드를 읽지 못했습니다. 입력칸에 직접 붙여 넣으십시오.', 'alert');
-      $('#manual').hidden = false;
-      $('#answer').focus();
+      setManual(true);
     }
   } else if (act === 'manual') {
-    $('#manual').hidden = false;
-    $('#answer').focus();
+    setManual($('#manual').hidden);
   } else if (act === 'clearans') {
     $('#answer').value = '';
     draft.answer = '';
