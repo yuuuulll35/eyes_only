@@ -10,7 +10,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
 const view = $('#view');
 const crumb = $('#crumb');
-let audit = store.pref.get('audit') === '1';
+let audit = false;
 let shared = null;
 let tab = 'incident_log';
 let openId = '';
@@ -407,8 +407,15 @@ function vFile(f, { external = false } = {}) {
 
 /* ---------- 접수 ---------- */
 
-const draft = { mode: 1, observer: '', subject: '', pc: '', trigger: '', answer: '', obsPick: 'auto', subPick: 'auto', npc2: '', fromId: '', curId: '' };
-try { Object.assign(draft, JSON.parse(store.pref.get('draft') || '{}')); } catch { /* ignore */ }
+const DRAFT0 = { mode: 1, observer: '', subject: '', pc: '', trigger: '', answer: '', obsPick: 'auto', subPick: 'auto', npc2: '', fromId: '', curId: '' };
+const draft = { ...DRAFT0 };
+store.pref.set('draft', '');
+
+/* 새 보고서 화면에 새로 들어올 때마다 처음 상태로 */
+function resetDraft() {
+  Object.assign(draft, DRAFT0);
+  vIntake.applied = '';
+}
 /* 임의를 고르면 이름을 비워 보내고, OOC가 AI에게 고르게 한다 */
 const curFile = () => (draft.curId ? store.byId(draft.curId) : null);
 const nextPart = () => { const d = partsDone(curFile()); return [1, 2, 3].find((n) => !d[n]) || 0; };
@@ -438,7 +445,7 @@ function pickRow({ key, pickKey, label, autoLabel, autoDesc, ph }) {
       : `<p class="pick-d">${autoDesc}</p>`}
   </div>`;
 }
-const saveDraft = () => store.pref.set('draft', JSON.stringify(draft));
+const saveDraft = () => {};
 
 function vIntake(q, { first = false } = {}) {
   if (q.get('mode') && vIntake.applied !== location.hash) {
@@ -696,7 +703,7 @@ async function route() {
   if (/^#r=[jz][A-Za-z0-9_-]+$/.test(location.hash)) {
     try {
       shared = await store.unpack(location.hash.slice(3));
-      if (openId !== 'shared') tab = TABS[0][0];
+      if (openId !== 'shared') { tab = TABS[0][0]; audit = false; }
       openId = 'shared';
       render(['shared'], new URLSearchParams());
     } catch {
@@ -712,10 +719,13 @@ async function route() {
 }
 
 function render(parts, q) {
+  const group = (n) => (n === 'first' || n === 'intake' ? 'intake' : n);
   const [name0 = 'files', arg] = parts;
   const first = !store.all().length && name0 !== 'shared';
   const name = first ? 'first' : name0;
   document.body.classList.toggle('solo', first);
+  if (group(name) === 'intake' && render.prevGroup !== 'intake') resetDraft();
+  render.prevGroup = group(name);
   document.body.dataset.view = name;
   let html;
   let path;
@@ -723,7 +733,7 @@ function render(parts, q) {
     case 'first': html = vIntake(q, { first: true }); path = '~/new'; break;
     case 'intake': html = vIntake(q); path = '~/new'; break;
     case 'file': {
-      if (openId !== arg) { openId = arg; tab = TABS[0][0]; }
+      if (openId !== arg) { openId = arg; tab = TABS[0][0]; audit = false; }
       const f = store.byId(arg);
       html = vFile(f);
       path = `~/files/${f?.no || arg}`;
@@ -979,7 +989,6 @@ document.addEventListener('click', async (e) => {
 document.addEventListener('change', (e) => {
   if (e.target.dataset?.toggle !== 'audit') return;
   audit = e.target.checked;
-  store.pref.set('audit', audit ? '1' : '');
   const y = window.scrollY;
   showTab(tab);
   window.scrollTo(0, y);
