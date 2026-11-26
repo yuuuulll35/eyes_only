@@ -12,13 +12,13 @@ const view = $('#view');
 const crumb = $('#crumb');
 let audit = store.pref.get('audit') === '1';
 let shared = null;
-let tab = 'overview';
+let tab = 'incident_log';
 let openId = '';
 
 /* 보고서 안의 탭. 순서대로 읽도록 다음 버튼으로 이어진다 */
 const TABS = [
-  ['overview', '한눈에 보기', '관찰자의 결론과 위험도, 핵심 정보를 먼저 봅니다.'],
-  ['incident_log', '사건 일지', '대상과 관련해 벌어진 일들을 순서대로 봅니다.'],
+  ['incident_log', '사건 일지', '먼저 무슨 일이 있었는지 봅니다. 이 일들 때문에 관찰이 시작됐습니다.'],
+  ['overview', '한눈에 보기', '관찰자의 결론과 위험도, 핵심 정보입니다.'],
   ['dossier', '신상 정보', '관찰자가 알아낸 대상의 신상과 인간관계입니다.'],
   ['field_notes', '미행·도청', '관찰자가 몰래 지켜본 장면과 엿들은 말입니다.'],
   ['psychological', '성격 분석', '관찰자가 판단한 대상의 성향과 습관입니다.'],
@@ -509,7 +509,7 @@ function submitAnswer() {
   draft.trigger = '';
   saveDraft();
   openId = file.id;
-  tab = 'overview';
+  tab = TABS[0][0];
   ss('fresh', replaced ? 'replaced' : 'new');
   location.hash = fileLink(file);
 }
@@ -603,7 +603,7 @@ async function route() {
   if (/^#r=[jz][A-Za-z0-9_-]+$/.test(location.hash)) {
     try {
       shared = await store.unpack(location.hash.slice(3));
-      if (openId !== 'shared') tab = 'overview';
+      if (openId !== 'shared') tab = TABS[0][0];
       openId = 'shared';
       render(['shared'], new URLSearchParams());
     } catch {
@@ -630,7 +630,7 @@ function render(parts, q) {
     case 'first': html = vIntake(q, { first: true }); path = '~/new'; break;
     case 'intake': html = vIntake(q); path = '~/new'; break;
     case 'file': {
-      if (openId !== arg) { openId = arg; tab = 'overview'; }
+      if (openId !== arg) { openId = arg; tab = TABS[0][0]; }
       const f = store.byId(arg);
       html = vFile(f);
       path = `~/files/${f?.no || arg}`;
