@@ -243,9 +243,9 @@ function tabDossier(f) {
     ${sec('01', '기본 신상', '', entList(f.profile, (p) => p.label))}
     ${sec('02', '인간관계도', '', `${relationMap(f)}${entList(f.relations, (r) => r.who)}`)}
     ${sec('03', '외모와 특징', '', entList(f.look))}
-    ${sec('04', '좋아하는 것과 싫어하는 것', '', `<div class="two">
-      <div><p class="mini">+ 좋아하는 것</p>${entList(f.likes)}</div>
-      <div><p class="mini">− 싫어하는 것</p>${entList(f.dislikes)}</div></div>`)}`;
+    ${sec('04', '좋아하는 것과 싫어하는 것', '', `<div class="two likehate">
+      <div><p class="lh-h lh-like">LIKE</p>${entList(f.likes)}</div>
+      <div><p class="lh-h lh-hate">HATE</p>${entList(f.dislikes)}</div></div>`)}`;
 }
 
 function tabNotes(f) {

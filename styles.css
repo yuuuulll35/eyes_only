@@ -1070,3 +1070,16 @@ button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { bac
 @media (max-width: 640px) { .judge .btn { width: 100%; } }
 .tap-memo { display: none; }
 .tap.heard .tap-memo { display: block; animation: pop .35s var(--ease) both; }
+
+/* LIKE / HATE 두 칸 + 세로 구분선 */
+.likehate { gap: 0; }
+.likehate > div { min-width: 0; padding: 0 22px; }
+.likehate > div:first-child { padding-left: 0; }
+.likehate > div + div { border-left: 1px solid var(--line2); padding-right: 0; }
+.lh-h { font-family: var(--px); font-size: 22px; letter-spacing: .14em; line-height: 1; margin-bottom: 8px; }
+.lh-like { color: var(--ink); }
+.lh-hate { color: var(--red); text-shadow: 0 0 6px rgba(255, 97, 87, .35); }
+@media (max-width: 640px) {
+  .likehate > div { padding: 0; }
+  .likehate > div + div { border-left: 0; border-top: 1px solid var(--line2); margin-top: 14px; padding-top: 14px; }
+}
