@@ -102,7 +102,8 @@ function accuracy(f) {
   const c = { fact: 0, guess: 0, error: 0, unknown: 0 };
   items.forEach((i) => { c[i.st] = (c[i.st] || 0) + 1; });
   const judged = c.fact + c.guess + c.error;
-  const pct = judged ? Math.round(((c.fact + c.guess * 0.5) / judged) * 100) : null;
+  const fact = c.fact + (auditOn ? 0 : c.error);
+  const pct = judged ? Math.round(((fact + c.guess * 0.5) / judged) * 100) : null;
   return { ...c, total: items.length, pct };
 }
 
@@ -218,7 +219,7 @@ function tabOverview(f) {
       </div>
       <div class="ro" role="listitem">
         <p class="ro-k">직접 확인한 비율 <span>보고서 항목 중 ${OJ} 직접 보고 확인한 내용의 비율</span></p>
-        <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>검수 결과</em></p>
+        <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>${auditOn ? '판정 반영' : `${OJ} 쓴 그대로`}</em></p>
         <span class="segbar" aria-hidden="true">${seg('fact', shownFact)}${seg('guess', acc.guess)}${auditOn ? seg('error', acc.error) : ''}${seg('unknown', acc.unknown)}</span>
         <p class="ro-c">확인 ${shownFact} · 추정 ${acc.guess}${auditOn ? ` · 오인 ${acc.error}` : ''} · 미확인 ${acc.unknown}</p>
       </div>
@@ -340,20 +341,20 @@ function vFile(f, { external = false } = {}) {
       <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>대외비 · 열람 주의</span></div>
     </header>
 
-    ${acc.error ? (canJudge(f) ? `<div class="d-controls">
-      <p class="sw-c">${audit ? `${OJ} 잘못 알고 쓴 내용 ${acc.error}건 바로잡는 중` : `${OJ} 잘못 알고 쓴 내용 ${acc.error}건`}</p>
+    ${!canJudge(f) ? `<div class="judge">
+      <div class="judge-t">
+        <p class="judge-h">사실 여부 판정 대기</p>
+        <p class="judge-d">${OJ} 쓴 기록이 사실인지는 아직 확인되지 않음 · ${josa(O, '을', '를')} 몰래 지켜본 제3자의 감시 기록이 있어야 판정 가능</p>
+      </div>
+      ${external ? '' : `<a class="btn solid" href="#/intake?mode=2&npc=${encodeURIComponent(obsName(f))}&pc=${encodeURIComponent(f.pc || '')}&from=${encodeURIComponent(f.id)}">사실 여부 판정하기 →</a>`}
+    </div>` : acc.error ? `<div class="d-controls">
+      <p class="sw-c">${audit ? `${OJ} 잘못 알고 쓴 내용 ${acc.error}건 바로잡는 중` : `판정 완료 · ${OJ} 잘못 알고 쓴 내용 ${acc.error}건`}</p>
       <label class="toggle">
         <span class="tg-l">오해 바로잡기</span>
         <input type="checkbox" role="switch" class="tg-in" data-toggle="audit"${audit ? ' checked' : ''}>
         <span class="tg-track" aria-hidden="true"><i></i></span>
       </label>
-    </div>` : `<div class="judge">
-      <div class="judge-t">
-        <p class="judge-h">사실 여부 판정 대기 <b>${acc.error}건</b></p>
-        <p class="judge-d">${OJ} 쓴 기록 중 사실인지 확인되지 않은 내용 · ${josa(O, '을', '를')} 몰래 지켜본 제3자의 감시 기록이 있어야 판정 가능</p>
-      </div>
-      ${external ? '' : `<a class="btn solid" href="#/intake?mode=2&npc=${encodeURIComponent(obsName(f))}&pc=${encodeURIComponent(f.pc || '')}&from=${encodeURIComponent(f.id)}">사실 여부 판정하기 →</a>`}
-    </div>`) : ''}
+    </div>` : (f.mode === 1 ? '<div class="d-controls"><p class="sw-c">판정 완료 · 잘못 안 내용 없음</p></div>' : '')}
     <span class="tabs-anchor" aria-hidden="true"></span>
     <nav class="tabs" role="tablist" aria-label="보고서 항목">
       ${TABS.map(([tk, tt], n) => {
@@ -783,7 +784,7 @@ document.addEventListener('click', async (e) => {
       i = reduced.matches ? chars.length : i + 1;
       q.textContent = `“${chars.slice(0, i).join('')}${i < chars.length ? '' : '”'}`;
       if (i < chars.length) setTimeout(step, 55);
-      else { tap.classList.remove('playing'); b.textContent = '▶'; }
+      else { tap.classList.remove('playing'); tap.classList.add('heard'); b.textContent = '▶'; }
     };
     step();
   } else if (act === 'vault') {

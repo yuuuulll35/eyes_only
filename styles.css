@@ -1068,3 +1068,5 @@ button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { bac
 .linked { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 12px; padding: 10px 12px; border: 1px solid rgba(255, 198, 110, .4); font-size: 14px; color: var(--ink2); }
 .linked b { color: var(--amber); }
 @media (max-width: 640px) { .judge .btn { width: 100%; } }
+.tap-memo { display: none; }
+.tap.heard .tap-memo { display: block; animation: pop .35s var(--ease) both; }

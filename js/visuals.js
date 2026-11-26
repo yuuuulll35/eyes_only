@@ -125,7 +125,7 @@ export function wiretap(list, who = '') {
         <div class="wave" aria-hidden="true">${bars}</div>
       </div>
       <p class="tap-q" data-said="${esc(t.said)}"><span class="tap-hidden">▶를 누르면 엿들은 말 재생</span></p>
-      ${memoLine(t.memo, who)}
+      ${t.memo ? `<div class="tap-memo">${memoLine(t.memo, who)}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
