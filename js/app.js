@@ -763,6 +763,32 @@ function showTabKeep() {
   window.scrollTo(0, y);
 }
 
+function crtBake(g, w, h) {
+  const src = g.getImageData(0, 0, w, h);
+  const d = src.data;
+  const out = g.createImageData(w, h);
+  const o = out.data;
+  const sh = Math.max(1, Math.round(w / 320));
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    const dim = y % 3 === 0 ? 0.78 : 1;
+    for (let x = 0; x < w; x++) {
+      const i = (row + x) * 4;
+      const r = d[(row + Math.min(w - 1, x + sh)) * 4];
+      const gg = d[i + 1];
+      const b = d[(row + Math.max(0, x - sh)) * 4 + 2];
+      const l = 0.3 * r + 0.59 * gg + 0.11 * b;
+      const sat = (v) => l + (v - l) * 0.75;
+      const con = (v) => (v - 128) * 1.18 + 128;
+      o[i] = con(sat(r)) * 0.9 * dim;
+      o[i + 1] = con(sat(gg)) * 0.98 * dim;
+      o[i + 2] = con(sat(b)) * 0.92 * dim;
+      o[i + 3] = 255;
+    }
+  }
+  g.putImageData(out, 0, 0);
+}
+
 async function shrinkImage(file, max = 960) {
   const url = URL.createObjectURL(file);
   try {
@@ -771,7 +797,9 @@ async function shrinkImage(file, max = 960) {
     const c = document.createElement('canvas');
     c.width = Math.round(img.naturalWidth * k);
     c.height = Math.round(img.naturalHeight * k);
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0, c.width, c.height);
+    crtBake(g, c.width, c.height);
     return c.toDataURL('image/jpeg', 0.72);
   } finally {
     URL.revokeObjectURL(url);

@@ -40,17 +40,6 @@
 
   <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
   <div class="crt" aria-hidden="true"></div>
-  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <filter id="crt-rgb" color-interpolation-filters="sRGB">
-      <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-      <feOffset in="r" dx="2" dy="0" result="r2"/>
-      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
-      <feOffset in="b" dx="-2" dy="0" result="b2"/>
-      <feBlend in="r2" in2="g" mode="screen" result="rg"/>
-      <feBlend in="rg" in2="b2" mode="screen"/>
-    </filter>
-  </svg>
 
   <noscript><p class="noscript">이 페이지는 JavaScript가 필요합니다.</p></noscript>
   <script type="module" src="js/app.js"></script>
