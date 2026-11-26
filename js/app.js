@@ -1,4 +1,4 @@
-import { buildPrompt, parse, MODES, josa } from './ooc.js';
+import { buildPrompt, parse, MODES, PARTS, josa } from './ooc.js';
 import { SAMPLES, SAMPLE_VER } from './data.js';
 import * as store from './store.js';
 import { glyph } from './glyph.js';
@@ -297,6 +297,16 @@ function tabCount(f, k) {
   }[k];
 }
 
+/* 3부로 나눠 받은 기록 중 어떤 부가 들어왔는지 */
+function partsDone(f) {
+  if (!f) return { 1: false, 2: false, 3: false };
+  return {
+    1: !!(f.title || f.headline || f.profile?.length || f.look?.length),
+    2: !!(f.notes?.length || f.psych?.length || f.incidents?.length || f.traits?.length || f.intercepts?.length),
+    3: !!(f.restricted?.length || f.scribbles?.length || f.comment || f.sealed?.length),
+  };
+}
+
 /* 경계 기록(MODE 01)의 오해는 그 NPC를 지켜본 감시 기록(MODE 02)이 있어야 판정된다 */
 function canJudge(f) {
   if (f.mode === 2) return true;
@@ -355,6 +365,15 @@ function vFile(f, { external = false } = {}) {
         <span class="tg-track" aria-hidden="true"><i></i></span>
       </label>
     </div>` : (f.mode === 1 ? '<div class="d-controls"><p class="sw-c">판정 완료. 잘못 안 내용 없음</p></div>' : '')}
+    ${(() => {
+      if (external || f.sample) return '';
+      const d = partsDone(f);
+      const left = PARTS.filter((pt) => !d[pt.no]);
+      return left.length ? `<div class="judge cont">
+        <div class="judge-t"><p class="judge-h">아직 받지 않은 기록</p><p class="judge-d">${left.map((pt) => `${pt.no}부 ${pt.name}`).join(', ')}</p></div>
+        <a class="btn solid" href="#/intake?cont=${encodeURIComponent(f.id)}">이어서 받기 →</a>
+      </div>` : '';
+    })()}
     <span class="tabs-anchor" aria-hidden="true"></span>
     <nav class="tabs" role="tablist" aria-label="보고서 항목">
       ${TABS.map(([tk, tt], n) => {
@@ -388,10 +407,17 @@ function vFile(f, { external = false } = {}) {
 
 /* ---------- 접수 ---------- */
 
-const draft = { mode: 1, observer: '', subject: '', pc: '', trigger: '', answer: '', obsPick: 'auto', subPick: 'auto', npc2: '', fromId: '' };
+const draft = { mode: 1, observer: '', subject: '', pc: '', trigger: '', answer: '', obsPick: 'auto', subPick: 'auto', npc2: '', fromId: '', curId: '' };
 try { Object.assign(draft, JSON.parse(store.pref.get('draft') || '{}')); } catch { /* ignore */ }
 /* 임의를 고르면 이름을 비워 보내고, OOC가 AI에게 고르게 한다 */
-const promptArgs = () => ({
+const curFile = () => (draft.curId ? store.byId(draft.curId) : null);
+const nextPart = () => { const d = partsDone(curFile()); return [1, 2, 3].find((n) => !d[n]) || 0; };
+const promptArgs = (part = nextPart() || 1) => {
+  const cf = curFile();
+  if (part > 1 && cf) return { mode: cf.mode, observer: obsName(cf), subject: cf.subject, pc: cf.pc || draft.pc, part };
+  return { ...baseArgs(), part };
+};
+const baseArgs = () => ({
   mode: draft.mode,
   observer: draft.mode === 1 && draft.obsPick === 'name' ? draft.observer : '',
   subject: draft.mode === 1 ? (draft.subPick === 'name' ? draft.subject : '') : draft.npc2,
@@ -419,10 +445,21 @@ function vIntake(q, { first = false } = {}) {
     draft.mode = q.get('mode') === '2' ? 2 : 1;
     draft.npc2 = q.get('npc') || '';
     draft.fromId = q.get('from') || '';
+    draft.curId = '';
     if (q.get('pc')) draft.pc = q.get('pc');
     vIntake.applied = location.hash;
     saveDraft();
   }
+  if (q.get('cont') && vIntake.applied !== location.hash) {
+    const cf0 = store.byId(q.get('cont'));
+    if (cf0) { draft.curId = cf0.id; draft.mode = cf0.mode; }
+    vIntake.applied = location.hash;
+    saveDraft();
+  }
+  if (draft.curId && (!curFile() || !nextPart())) { draft.curId = ''; saveDraft(); }
+  const cf = curFile();
+  const done = partsDone(cf);
+  const np = nextPart() || 1;
   const wantTrig = q.get('trigger') === '1';
   const m = draft.mode;
   const openOpt = wantTrig || !!(draft.pc || draft.trigger);
@@ -442,7 +479,11 @@ function vIntake(q, { first = false } = {}) {
     : `${store.all().length ? '<p class="back"><a class="lnk" href="#/files">← 보고서 목록</a></p>' : ''}${head('새 보고서', '새 관찰 보고서 만들기')}`;
   return `${top}
   <form class="intake" id="intake" autocomplete="off">
-    <section class="step">
+    ${cf ? `<div class="cont-bar">
+      <p><b>${esc(cf.subject)}</b> 보고서 이어서 받는 중 <span>${esc(obsName(cf))}의 ${MODES[cf.mode]?.label || '기록'}</span></p>
+      <button class="btn sm" type="button" data-act="restart">새로 시작</button>
+    </div>` : ''}
+    ${cf ? '' : `<section class="step">
       <h2 class="sh"><span class="sh-no">01</span><span class="sh-ko big">관찰 방식 고르기</span></h2>
       <div class="modes" role="radiogroup" aria-label="관찰 모드">
         ${[1, 2].map((k) => `<label class="mode-card pick">
@@ -454,8 +495,8 @@ function vIntake(q, { first = false } = {}) {
       </div>
       ${m === 2 && draft.npc2 ? `<p class="linked"><span>감시 대상 <b>${esc(draft.npc2)}</b> (${esc(draft.npc2)}의 경계 기록에서 이어짐)</span><button class="chip-btn" type="button" data-act="unlink">연결 해제</button></p>` : ''}
       ${m === 2 ? opt : ''}
-    </section>
-    ${m === 1 ? `<section class="step">
+    </section>`}
+    ${!cf && m === 1 ? `<section class="step">
       <h2 class="sh"><span class="sh-no">02</span><span class="sh-ko big">누가 누구를 관찰할까</span></h2>
       <div class="picks">
         ${pickRow({ key: 'observer', pickKey: 'obsPick', label: '지켜보는 NPC', autoLabel: '임의', autoDesc: '등장 NPC 중 PC 곁을 가장 경계할 만한 인물을 AI가 고릅니다.', ph: '지켜보는 NPC 이름' })}
@@ -466,13 +507,20 @@ function vIntake(q, { first = false } = {}) {
     </section>` : ''}
 
     <section class="step">
-      <h2 class="sh"><span class="sh-no">${m === 1 ? '03' : '02'}</span><span class="sh-ko big">OOC 보내고 답 붙여넣기</span></h2>
-      <p class="hint">OOC를 복사해 롤플 채팅에 보내고, 받은 답을 통째로 복사한 뒤 답 붙여넣기를 누르십시오.</p>
-      <div class="flow">
-        <button class="btn solid" type="button" data-act="copyprompt">OOC 복사</button>
-        <span class="flow-arrow" aria-hidden="true">──▶</span>
-        <button class="btn solid" type="button" data-act="pasteclip">답 붙여넣기</button>
-      </div>
+      <h2 class="sh"><span class="sh-no">${cf ? '01' : m === 1 ? '03' : '02'}</span><span class="sh-ko big">OOC 보내고 답 붙여넣기</span></h2>
+      <p class="hint">답이 잘리지 않도록 세 번에 나눠 받기</p>
+      <ol class="parts">
+        ${PARTS.map((pt) => `<li class="part${done[pt.no] ? ' done' : ''}${np === pt.no ? ' cur' : ''}">
+          <div class="part-t">
+            <p class="part-n"><b>${pt.no}부</b> ${pt.name}<span class="part-st">${done[pt.no] ? '접수 완료' : np === pt.no ? '지금 차례' : '대기'}</span></p>
+            <p class="part-d">${pt.desc}</p>
+          </div>
+          <div class="part-acts">
+            <button class="btn${np === pt.no ? '' : ''}" type="button" data-act="copyprompt" data-part="${pt.no}">OOC 복사</button>
+            <button class="btn${np === pt.no ? ' solid' : ''}" type="button" data-act="pasteclip" data-part="${pt.no}">답 붙여넣기</button>
+          </div>
+        </li>`).join('')}
+      </ol>
       <div class="flow-sub">
         <button class="btn" type="button" data-act="manual" aria-expanded="${draft.answer ? 'true' : 'false'}" aria-controls="manual">${draft.answer ? '입력란 닫기' : '직접 붙여넣기'}</button>
         <button class="btn" type="button" data-act="peek" aria-expanded="false"><span class="peek-l">OOC 내용 보기</span> <span class="count" id="pLen"></span></button>
@@ -480,12 +528,13 @@ function vIntake(q, { first = false } = {}) {
       <div class="manual" id="manual"${draft.answer ? '' : ' hidden'}>
         <textarea name="answer" id="answer" rows="8" spellcheck="false" placeholder="채팅에서 받은 답을 여기에 붙여 넣기" aria-label="채팅에서 받은 답">${esc(draft.answer)}</textarea>
         <div class="manual-acts">
-          <button class="btn solid" type="submit">보고서 만들기</button>
+          <button class="btn solid" type="submit">기록 등록</button>
           <button class="btn" type="button" data-act="clearans">지우기</button>
         </div>
       </div>
       <p class="err" id="err" role="alert" hidden></p>
       <pre class="prompt" id="promptView" hidden></pre>
+      ${cf ? `<div class="row-acts left"><a class="btn" href="${fileLink(cf)}">지금까지 받은 것으로 보고서 보기</a></div>` : ''}
     </section>
     ${first ? '<p class="first-sample"><button class="lnk" type="button" data-act="samples">예시 보고서로 먼저 둘러보기</button></p>' : ''}
   </form>`;
@@ -495,9 +544,10 @@ function bindIntake() {
   const form = $('#intake');
   if (!form) return;
   const upd = () => {
-    const p = buildPrompt(promptArgs());
+    const part = nextPart() || 1;
+    const p = buildPrompt(promptArgs(part));
     $('#promptView').textContent = p;
-    $('#pLen').textContent = `${[...p].length}자`;
+    $('#pLen').textContent = `${part}부 · ${[...p].length}자`;
   };
   upd();
   const trig = form.querySelector('[data-focus]');
@@ -553,16 +603,33 @@ function submitAnswer() {
     return;
   }
   err.hidden = true;
-  const { file, replaced } = store.upsert(r.data, { trigger: draft.trigger });
+  const cf = curFile();
+  const isPart1 = partsDone(r.data)[1];
+  const fresh = !cf || cf.subject !== r.data.subject;
+  const res = isPart1 && fresh
+    ? store.upsert(r.data, { trigger: draft.trigger })
+    : store.merge(r.data, { id: cf?.id || '', trigger: draft.trigger });
+  const file = res.file;
   const from = draft.fromId && store.byId(draft.fromId);
   draft.answer = '';
   draft.trigger = '';
+  draft.curId = file.id;
+  saveDraft();
+  const left = [1, 2, 3].filter((n) => !partsDone(file)[n]);
+  if (left.length) {
+    toast(`접수 완료. 이어서 ${left[0]}부 OOC를 보내십시오.`);
+    const focusCur = () => $('.part.cur')?.scrollIntoView({ block: 'center' });
+    if (/^#\/intake/.test(location.hash)) route().then(focusCur);
+    else { location.hash = '#/intake'; setTimeout(focusCur, 80); }
+    return;
+  }
+  draft.curId = '';
   draft.fromId = '';
   draft.npc2 = '';
   saveDraft();
   openId = file.id;
   tab = TABS[0][0];
-  ss('fresh', from && file.mode === 2 && canJudge(from) ? `judged:${obsName(from)}` : replaced ? 'replaced' : 'new');
+  ss('fresh', from && file.mode === 2 && canJudge(from) ? `judged:${obsName(from)}` : res.replaced ? 'replaced' : 'new');
   location.hash = fileLink(file);
 }
 
@@ -773,7 +840,11 @@ document.addEventListener('click', async (e) => {
   if (!b) return;
   const act = b.dataset.act;
   if (act === 'samples') loadSamples();
-  else if (act === 'unlink') {
+  else if (act === 'restart') {
+    draft.curId = '';
+    saveDraft();
+    route();
+  } else if (act === 'unlink') {
     draft.npc2 = '';
     draft.fromId = '';
     saveDraft();
@@ -838,8 +909,9 @@ document.addEventListener('click', async (e) => {
       b.textContent = '다시 가리기';
     }
   } else if (act === 'copyprompt') {
-    const ok = await copyText(buildPrompt(promptArgs()));
-    toast(ok ? 'OOC를 복사했습니다. 채팅에 보내고 답을 복사해 오십시오.' : '복사하지 못했습니다. OOC 내용 보기에서 직접 복사하십시오.', ok ? '' : 'alert');
+    const part = Number(b.dataset.part) || nextPart() || 1;
+    const ok = await copyText(buildPrompt(promptArgs(part)));
+    toast(ok ? `${part}부 OOC를 복사했습니다. 채팅에 보내고 답을 복사해 오십시오.` : '복사하지 못했습니다. OOC 내용 보기에서 직접 복사하십시오.', ok ? '' : 'alert');
     if (!ok) $('#promptView').hidden = false;
   } else if (act === 'peek') {
     const pv = $('#promptView');

@@ -78,6 +78,27 @@ export function upsert(data, { trigger = '' } = {}) {
   return { file, replaced: true };
 }
 
+/* 나눠 받은 답을 같은 보고서에 합친다. 답에 들어 있는 칸만 바꾼다 */
+export function merge(data, { id = '', trigger = '' } = {}) {
+  let f = id ? files.find((x) => x.id === id) : null;
+  if (!f || f.subject !== data.subject) f = files.find((x) => x.subject === data.subject);
+  if (!f) return { file: add(data, { trigger }), created: true };
+  for (const [k, v] of Object.entries(data)) {
+    if (k === 'mode') continue;
+    if (Array.isArray(v)) { if (v.length) f[k] = v; continue; }
+    if (k === 'observer') {
+      if (v && v.name && !/^(NPC|UNKNOWN)$/.test(v.name)) f.observer = { name: v.name, rel: v.rel || f.observer?.rel || '' };
+      continue;
+    }
+    if (v !== '' && v != null) f[k] = v;
+  }
+  if (trigger) f.trigger = String(trigger).slice(0, 30);
+  f.at = new Date().toISOString();
+  f.sample = false;
+  save();
+  return { file: f, created: false };
+}
+
 export function remove(id) {
   files = files.filter((f) => f.id !== id);
   save();
