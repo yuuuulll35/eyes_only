@@ -101,7 +101,7 @@ python3 -m http.server 8000
 ```
 index.html     골격
 styles.css     단말기 디자인, 반응형
-js/app.js      라우터, 접수, 보고서 목록, 보고서 탭, 검수 표시, 연출
+js/app.js      라우터, 접수, 보고서 목록, 보고서 탭, 오해 바로잡기, 연출
 js/ooc.js      OOC 요청문과 답 파서
 js/store.js    저장, 백업, 공유 링크 압축
 js/glyph.js    이름별 지문형 식별 패턴
