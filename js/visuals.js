@@ -49,7 +49,7 @@ export function relationMap(f) {
     <svg class="rmap-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>
     <div class="rnode r-center" style="--x:50%;--y:50%"><span class="rn-tag">관찰 대상</span><b>${esc(f.subject)}</b></div>
     ${nodes.map((n, i) => `<div class="rnode${n.pc ? ' r-pc' : ''}${n.obs ? ' r-obs' : ''}" style="--x:${pos[i][0].toFixed(1)}%;--y:${pos[i][1].toFixed(1)}%">
-      <span class="rn-tag">${n.obs ? '◉ 관찰자' : n.pc ? 'PC' : '주변 인물'}</span>
+      <span class="rn-tag">${n.obs ? '◉ 지켜보는 사람' : n.pc ? 'PC' : '주변 인물'}</span>
       <b>${esc(n.who)}</b>
       <span class="rn-t">${esc(short(n.text, 30))}</span>
     </div>`).join('')}

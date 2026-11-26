@@ -974,3 +974,22 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
   .tab-head .tab-title { font-size: 20px; }
   .legend-line { gap: 6px 14px; }
 }
+
+/* 오해 바로잡기: 보고서 전체 설정이라 탭 위에 한 번만 */
+.d-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px 14px; flex-wrap: wrap; }
+.d-controls .sw-c { font-size: 13px; color: var(--amber); text-align: right; }
+.tab-head { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 640px) {
+  .d-controls { flex-direction: column-reverse; align-items: flex-end; }
+}
+
+/* 켜고 끄는 토글 (버튼 상자 없이) */
+.toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-height: 40px; }
+.tg-l { font-size: 14.5px; font-weight: 700; }
+.tg-in { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.tg-track { position: relative; flex: none; width: 46px; height: 26px; border-radius: 13px; background: var(--faint); border: 1px solid var(--line2); transition: background .2s, border-color .2s; }
+.tg-track i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--ink2); box-shadow: 0 1px 3px rgba(0, 0, 0, .5); transition: transform .2s var(--ease), background .2s; }
+.tg-in:checked + .tg-track { background: rgba(255, 198, 110, .35); border-color: var(--amber); }
+.tg-in:checked + .tg-track i { transform: translateX(20px); background: var(--amber); }
+.tg-in:focus-visible + .tg-track { outline: 2px solid var(--ink); outline-offset: 2px; }
+.toggle:hover .tg-track { border-color: var(--ink); }
