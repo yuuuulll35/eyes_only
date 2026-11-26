@@ -206,19 +206,19 @@ function tabOverview(f) {
 
     <div class="readouts" role="list">
       <div class="ro ro-threat" role="listitem">
-        <p class="ro-k">위험도 <span>${OJ} 판단한, ${josa(S, '이', '가')} ${P}에게 얼마나 위험한지</span></p>
+        <p class="ro-k">위험도 <span>${P}에게 위험한 정도</span></p>
         <p class="ro-n">${f.threat ?? '—'}<small>/100</small><em>${f.threat != null ? threatWord(f.threat) : ''}</em></p>
         ${f.threat != null ? gauge(f.threat) : ''}
         <p class="ro-c">${f.threatWhy ? esc(f.threatWhy) : `${OJ} 판단한 위험 정도`}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">이 보고서의 신빙성 <span>${OJ} 스스로 매긴, 이 기록을 얼마나 믿어도 되는지</span></p>
+        <p class="ro-k">이 보고서의 신빙성 <span>${O}의 자체 평가</span></p>
         <p class="ro-n">${f.trust ?? '—'}<small>/100</small><em>등급 ${grade(f.trust)}</em></p>
         ${bar(f.trust, 'ro-bar')}
         <p class="ro-c">${f.trustWhy ? esc(f.trustWhy) : `${O}의 자기 평가`}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">직접 확인한 비율 <span>보고서 항목 중 ${OJ} 직접 보고 확인한 내용의 비율</span></p>
+        <p class="ro-k">직접 확인한 비율 <span>직접 보고 확인한 내용</span></p>
         <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>${auditOn ? '판정 반영' : `${OJ} 쓴 그대로`}</em></p>
         <span class="segbar" aria-hidden="true">${seg('fact', shownFact)}${seg('guess', acc.guess)}${auditOn ? seg('error', acc.error) : ''}${seg('unknown', acc.unknown)}</span>
         <p class="ro-c">확인 ${shownFact}, 추정 ${acc.guess}${auditOn ? `, 오인 ${acc.error}` : ''}, 미확인 ${acc.unknown}</p>
