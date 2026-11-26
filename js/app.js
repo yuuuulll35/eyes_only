@@ -1,5 +1,5 @@
 import { buildPrompt, parse, MODES, josa } from './ooc.js';
-import { SAMPLES } from './data.js';
+import { SAMPLES, SAMPLE_VER } from './data.js';
 import * as store from './store.js';
 import { glyph } from './glyph.js';
 import { gauge, relationMap, radar, cctv, wiretap, chatLog, timeline } from './visuals.js';
@@ -654,13 +654,23 @@ function showTab(k) {
 
 /* ---------- 동작 ---------- */
 
-function loadSamples() {
+/* 예시는 늘 최신 1건으로: 예전 예시가 남아 있으면 지우고 새로 넣는다 */
+function putSamples() {
+  store.clear({ samplesOnly: true });
   SAMPLES.forEach((s) => {
     const r = parse(s.text);
-    if (r.data && !store.all().some((f) => f.subject === r.data.subject)) store.add(r.data, { at: s.at, trigger: s.trigger, sample: true });
+    if (!r.data) return;
+    const same = store.all().find((f) => f.subject === r.data.subject);
+    if (same) store.remove(same.id);
+    store.add({ ...r.data, sampleVer: SAMPLE_VER }, { at: s.at, trigger: s.trigger, sample: true });
   });
-  toast('예시 보고서 3건을 넣었습니다. 모든 인물은 허구의 성인입니다.');
-  if (location.hash === '#/files') route(); else location.hash = '#/files';
+}
+
+function loadSamples() {
+  putSamples();
+  toast('예시 보고서 1건을 넣었습니다. 모든 인물은 허구의 성인입니다.');
+  const f = store.all().find((x) => x.sample);
+  if (f) location.hash = fileLink(f);
 }
 
 document.addEventListener('click', async (e) => {
@@ -817,6 +827,7 @@ function clock() {
 }
 
 store.load();
+if (store.all().some((f) => f.sample && f.sampleVer !== SAMPLE_VER)) putSamples();
 clock();
 window.addEventListener('hashchange', route);
 route();
