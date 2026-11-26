@@ -710,7 +710,6 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
 /* =========================================================
    보고서 시각 요소
    ========================================================= */
-:root { --pen: 'Nanum Pen Script', 'Nanum Gothic Coding', cursive; --paper: #f3e7b8; --paper-ink: #2a2410; }
 
 /* 계기판 */
 .gauge .g-bg { fill: none; stroke: var(--faint); stroke-width: 14; }
@@ -723,12 +722,6 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
 .gauge .g-needle line { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
 .gauge .g-needle circle { fill: var(--ink); }
 @keyframes needle { from { transform: rotate(-90deg); } 70% { transform: rotate(calc(var(--ang) + 6deg)); } }
-
-/* 포스트잇 */
-.stickies { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-top: 4px; }
-.sticky { margin: 0; padding: 12px 16px 14px; min-width: 140px; max-width: 260px; background: var(--paper); color: var(--paper-ink); text-shadow: none; font-family: var(--pen); font-size: 26px; line-height: 1.15; transform: rotate(var(--r)); box-shadow: 0 8px 18px rgba(0, 0, 0, .5); position: relative; transition: transform .2s; }
-.sticky::before { content: ''; position: absolute; left: 50%; top: -8px; width: 44px; height: 14px; transform: translateX(-50%); background: rgba(255, 255, 255, .35); }
-.sticky:hover { transform: rotate(0) scale(1.04); }
 
 /* 관계도 */
 .rmap { position: relative; height: 400px; margin-bottom: 14px; border: 1px dashed var(--line); background: radial-gradient(circle at 50% 50%, rgba(157, 255, 201, .06), transparent 60%); }
@@ -814,7 +807,6 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
   .psy-wrap { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .sticky { font-size: 24px; max-width: 100%; }
   .rmap { height: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; border-style: solid; }
   .rmap-lines { display: none; }
   .rnode { position: static; transform: none; width: auto; text-align: left; }
@@ -853,12 +845,30 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
 .ov-split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
 .ov-split.single { grid-template-columns: 1fr; }
 .ov-split > .sec { margin: 0; }
-.margin { padding: 16px clamp(14px, 2.2vw, 22px); border: 1px dashed rgba(243, 231, 184, .35); background: repeating-linear-gradient(0deg, transparent 0 27px, rgba(243, 231, 184, .05) 27px 28px); }
-.margin .sh-no { background: var(--paper); }
-.margin .sh-en { color: var(--paper); text-shadow: none; }
-.margin .stickies { flex-direction: column; align-items: flex-start; gap: 12px; margin: 4px 0 0 4px; }
-.margin .sticky { min-width: 0; max-width: 92%; font-size: 25px; padding: 10px 16px 12px; }
-.margin .sticky:nth-child(even) { align-self: flex-end; }
+.margin { display: flex; flex-direction: column; padding: 16px clamp(14px, 2.2vw, 22px); border: 1px solid rgba(255, 198, 110, .35); background: var(--panel); }
+.margin .sh-no { background: var(--amber); }
+
+/* 관찰자 혼잣말 대화창 */
+.chat { flex: 1; display: flex; flex-direction: column; border: 1px solid rgba(255, 198, 110, .3); background: rgba(0, 0, 0, .3); }
+.chat-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid rgba(255, 198, 110, .2); }
+.chat-av { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--amber); color: var(--amber); font-weight: 700; font-size: 15px; text-shadow: 0 0 6px rgba(255, 198, 110, .4); }
+.chat-who { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
+.chat-who b { font-size: 14.5px; color: var(--amber); }
+.chat-who span { font-size: 12px; color: var(--dim); }
+.chat-lock { margin-left: auto; font-size: 13px; opacity: .6; text-shadow: none; }
+.chat-body { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 12px; }
+.bubble { position: relative; max-width: 88%; padding: 9px 13px; border-radius: 4px 14px 14px 14px; border: 1px solid rgba(255, 198, 110, .45); background: rgba(255, 198, 110, .08); color: #ffe2b0; font-size: 15px; line-height: 1.5; text-shadow: 0 0 5px rgba(255, 198, 110, .25); animation: pop .35s var(--ease) both; animation-delay: var(--d); }
+.bubble:first-child::before { content: ''; position: absolute; left: -1px; top: -1px; width: 8px; height: 8px; border-left: 1px solid rgba(255, 198, 110, .45); border-top: 1px solid rgba(255, 198, 110, .45); }
+@keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.96); } }
+.bubble.typing { display: flex; gap: 4px; padding: 12px 14px; }
+.bubble.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); opacity: .4; animation: dot 1.2s infinite; }
+.bubble.typing i:nth-child(2) { animation-delay: .2s; }
+.bubble.typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes dot { 30% { opacity: 1; transform: translateY(-2px); } }
+.chat-input { display: flex; align-items: center; gap: 10px; margin: 0 12px 12px; padding: 8px 10px; border: 1px dashed rgba(255, 198, 110, .25); font-size: 12.5px; color: var(--dim); }
+.chat-input span { flex: 1; }
+.chat-input b { font-weight: 400; padding: 2px 10px; border: 1px solid var(--faint); color: var(--faint); }
+@media (prefers-reduced-motion: reduce) { .bubble, .bubble.typing i { animation: none; } }
 
 @media (max-width: 880px) {
   .readouts { grid-template-columns: 1fr 1fr; }

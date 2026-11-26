@@ -116,11 +116,22 @@ export function wiretap(list) {
   }).join('')}</div>`;
 }
 
-/* 관찰자가 여백에 갈겨쓴 포스트잇 */
-export function stickies(list, key) {
+/* 관찰자 혼잣말: 관찰자 혼자 쓰는 비공개 대화방 */
+export function chatLog(list, observer, mode) {
   if (!list.length) return '';
-  const r = seed(key);
-  return `<div class="stickies">${list.slice(0, 4).map((t) => `<p class="sticky" style="--r:${(r() * 8 - 4).toFixed(1)}deg">${esc(t)}</p>`).join('')}</div>`;
+  const name = String(observer || '?');
+  const initial = mode === 2 ? '?' : [...name.replace(/\s+/g, '')][0] || '?';
+  return `<div class="chat">
+    <div class="chat-head">
+      <span class="chat-av" aria-hidden="true">${esc(initial)}</span>
+      <span class="chat-who"><b>${esc(name)}</b><span>나에게 보내는 메모 · 비공개</span></span>
+    </div>
+    <ol class="chat-body">
+      ${list.slice(0, 5).map((t, i) => `<li class="bubble" style="--d:${(i * 0.45).toFixed(2)}s">${esc(t)}</li>`).join('')}
+      <li class="bubble typing" style="--d:${(Math.min(list.length, 5) * 0.45).toFixed(2)}s" aria-label="입력 중"><i></i><i></i><i></i></li>
+    </ol>
+    <p class="chat-input" aria-hidden="true"><span>열람 전용 · 메시지를 보낼 수 없습니다</span><b>전송</b></p>
+  </div>`;
 }
 
 /* 사건 타임라인 */

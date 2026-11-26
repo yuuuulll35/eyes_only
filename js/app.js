@@ -2,7 +2,7 @@ import { buildPrompt, parse, MODES, josa } from './ooc.js';
 import { SAMPLES } from './data.js';
 import * as store from './store.js';
 import { glyph } from './glyph.js';
-import { gauge, relationMap, radar, cctv, wiretap, stickies, timeline } from './visuals.js';
+import { gauge, relationMap, radar, cctv, wiretap, chatLog, timeline } from './visuals.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -225,8 +225,8 @@ function tabOverview(f) {
     <div class="ov-split${f.scribbles.length ? '' : ' single'}">
       ${sec('01', '핵심 신상', '', entList(f.profile.slice(0, 4), (p) => p.label))}
       ${f.scribbles.length ? `<section class="margin">
-        <h2 class="sh"><span class="sh-no">02</span><span class="sh-t">여백 낙서</span><span class="sh-ko">${esc(obsName(f))}가 보고서 귀퉁이에 끄적인 말</span></h2>
-        ${stickies(f.scribbles, f.subject)}
+        <h2 class="sh"><span class="sh-no">02</span><span class="sh-t">혼잣말</span><span class="sh-ko">보고서에는 못 쓴 ${esc(obsName(f))}의 속말</span></h2>
+        ${chatLog(f.scribbles, obsName(f), f.mode)}
       </section>` : ''}
     </div>
 
