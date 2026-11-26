@@ -54,6 +54,17 @@ export function add(data, { at, trigger = '', sample = false } = {}) {
   return file;
 }
 
+/* 인물 한 명당 보고서 하나: 같은 대상이 있으면 그 파일을 새 내용으로 바꾼다 */
+export function upsert(data, { trigger = '' } = {}) {
+  const i = files.findIndex((f) => f.subject === data.subject);
+  if (i < 0) return { file: add(data, { trigger }), replaced: false };
+  const old = files[i];
+  const file = { ...data, id: old.id, no: old.no, at: new Date().toISOString(), trigger: String(trigger || '').slice(0, 30), sample: false };
+  files[i] = file;
+  save();
+  return { file, replaced: true };
+}
+
 export function remove(id) {
   files = files.filter((f) => f.id !== id);
   save();
