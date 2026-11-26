@@ -136,6 +136,12 @@ function vFiles() {
   const list = store.all();
   return `${head('EYES ONLY', '관찰 보고서 목록',
     `<p class="vh-line">같은 인물을 다시 검사하면 새 내용으로 갱신</p>`)}
+  <p class="tools top">
+    <span>보관함</span>
+    <button class="btn sm" type="button" data-act="export">백업 저장</button>
+    <button class="btn sm" type="button" data-act="import">백업 반입</button>
+    <button class="btn sm danger" type="button" data-act="wipe">전체 파기</button>
+  </p>
   <section class="files" aria-label="보고서">
     ${list.map((f) => `<div class="file-wrap">
     <a class="file m${f.mode}" href="${fileLink(f)}">
@@ -159,15 +165,9 @@ function vFiles() {
     <a class="file file-new" href="#/intake">
       <span class="file-plus" aria-hidden="true">+</span>
       <b>새 보고서</b>
-      <span>OOC 복사 → 답 붙여넣기</span>
     </a>
   </section>
-  <p class="tools">
-    <span>보관함</span>
-    <button type="button" data-act="export">백업 저장</button>
-    <button type="button" data-act="import">백업 반입</button>
-    <button type="button" data-act="wipe" class="danger">전체 파기</button>
-  </p>`;
+`;
 }
 
 /* ---------- 보고서 내부 ---------- */

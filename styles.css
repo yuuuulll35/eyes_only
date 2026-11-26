@@ -631,9 +631,6 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
 .file-new span:last-child { font-size: 13.5px; }
 .file-plus { font-family: var(--px); font-size: 54px; line-height: .9; color: var(--ink); }
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; color: var(--dim); }
-.tools button { color: var(--ink2); min-height: 32px; }
-.tools button:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
-.tools .danger { color: var(--red); }
 
 /* 보고서 머리 */
 .d-head { align-items: flex-start; }
@@ -1083,3 +1080,8 @@ button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { bac
   .likehate > div { padding: 0; }
   .likehate > div + div { border-left: 0; border-top: 1px solid var(--line2); margin-top: 14px; padding-top: 14px; }
 }
+
+.tools { gap: 10px; }
+.tools > span { margin-right: 4px; }
+.tools .btn.sm { min-height: 36px; font-size: 13px; }
+.tools.top { justify-content: flex-end; padding-top: 0; border-top: 0; margin-top: -6px; }
