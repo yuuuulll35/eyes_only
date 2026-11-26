@@ -1,5 +1,3 @@
-/* 이름에서 뽑은 지문형 식별 패턴. 같은 이름이면 늘 같은 무늬가 나온다. */
-
 function hash(str) {
   let h = 2166136261;
   for (const ch of String(str)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }

@@ -7,7 +7,7 @@ export const pref = {
     try {
       if (v == null || v === '') localStorage.removeItem(PREF + k);
       else localStorage.setItem(PREF + k, String(v));
-    } catch { /* storage unavailable */ }
+    } catch {}
   },
 };
 
@@ -30,7 +30,6 @@ function save() {
   try { localStorage.setItem(KEY, JSON.stringify(files)); persistent = true; return true; } catch { persistent = false; return false; }
 }
 
-/* 보고서 일부를 고친다. 저장 공간이 모자라면 되돌리고 false */
 export function patch(id, data) {
   const f = files.find((x) => x.id === id);
   if (!f) return false;
@@ -67,7 +66,6 @@ export function add(data, { at, trigger = '', sample = false } = {}) {
   return file;
 }
 
-/* 인물 한 명당 보고서 하나: 같은 대상이 있으면 그 파일을 새 내용으로 바꾼다 */
 export function upsert(data, { trigger = '' } = {}) {
   const i = files.findIndex((f) => f.subject === data.subject);
   if (i < 0) return { file: add(data, { trigger }), replaced: false };
@@ -78,7 +76,6 @@ export function upsert(data, { trigger = '' } = {}) {
   return { file, replaced: true };
 }
 
-/* 나눠 받은 답을 같은 보고서에 합친다. 답에 들어 있는 칸만 바꾼다 */
 export function merge(data, { id = '', trigger = '' } = {}) {
   let f = id ? files.find((x) => x.id === id) : null;
   if (!f || f.subject !== data.subject) f = files.find((x) => x.subject === data.subject);
@@ -126,7 +123,6 @@ export function exportJson() {
   return JSON.stringify({ app: 'eyes_only', version: 1, exported: new Date().toISOString(), files: all() }, null, 2);
 }
 
-/* 공유 링크: 보고서 1건을 압축해 주소 뒤에 담는다 */
 const canZip = typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
 const b64u = (bytes) => {
   let s = '';

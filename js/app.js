@@ -17,7 +17,6 @@ let openId = '';
 let auditOn = false;
 let who = '';
 
-/* 보고서 안의 탭. 순서대로 읽도록 다음 버튼으로 이어진다 */
 const TABS = [
   ['incident_log', '사건 일지', (o) => `이 일들 때문에 ${o}의 관찰이 시작됐습니다.`],
   ['dossier', '신상 정보', (o, t) => `${josa(o, '이', '가')} 알아낸 ${t}의 신상과 인간관계 정보`],
@@ -33,8 +32,6 @@ const ST = {
   error: { tag: '오인', cls: 'error' },
   unknown: { tag: '미확인', cls: 'unknown' },
 };
-
-/* ---------- 공통 ---------- */
 
 function fmtDate(iso, withTime = true) {
   const d = new Date(iso);
@@ -130,8 +127,6 @@ function head(no, title, extra = '') {
   </header>`;
 }
 
-/* ---------- 보고서 목록 ---------- */
-
 function vFiles() {
   const list = store.all();
   return `${head('EYES ONLY', '관찰 보고서 목록',
@@ -170,8 +165,6 @@ function vFiles() {
 `;
 }
 
-/* ---------- 보고서 내부 ---------- */
-
 function redacted(text, key) {
   const len = Math.max(6, Math.min(40, [...text].length));
   return `<div class="redact" data-key="${esc(key)}">
@@ -179,7 +172,6 @@ function redacted(text, key) {
     <button class="chip-btn" type="button" data-act="reveal">열람 해제</button>
   </div>`;
 }
-
 
 function sec(no, title, sub, inner, cls = '') {
   return `<section class="sec ${cls}"><h2 class="sh"><span class="sh-no">${no}</span><span class="sh-t">${title}</span>${sub ? `<span class="sh-ko">${sub}</span>` : ''}</h2>${inner}</section>`;
@@ -297,7 +289,6 @@ function tabCount(f, k) {
   }[k];
 }
 
-/* 3부로 나눠 받은 기록 중 어떤 부가 들어왔는지 */
 function partsDone(f) {
   if (!f) return { 1: false, 2: false, 3: false };
   return {
@@ -307,7 +298,6 @@ function partsDone(f) {
   };
 }
 
-/* 경계 기록(MODE 01)의 오해는 그 NPC를 지켜본 감시 기록(MODE 02)이 있어야 판정된다 */
 function canJudge(f) {
   if (f.mode === 2) return true;
   const npc = obsName(f);
@@ -405,18 +395,14 @@ function vFile(f, { external = false } = {}) {
   </article>`;
 }
 
-/* ---------- 접수 ---------- */
-
 const DRAFT0 = { mode: 1, observer: '', subject: '', pc: '', trigger: '', answer: '', obsPick: 'auto', subPick: 'auto', npc2: '', fromId: '', curId: '' };
 const draft = { ...DRAFT0 };
 store.pref.set('draft', '');
 
-/* 새 보고서 화면에 새로 들어올 때마다 처음 상태로 */
 function resetDraft() {
   Object.assign(draft, DRAFT0);
   vIntake.applied = '';
 }
-/* 임의를 고르면 이름을 비워 보내고, OOC가 AI에게 고르게 한다 */
 const curFile = () => (draft.curId ? store.byId(draft.curId) : null);
 const nextPart = () => { const d = partsDone(curFile()); return [1, 2, 3].find((n) => !d[n]) || 0; };
 const promptArgs = (part = nextPart() || 1) => {
@@ -648,8 +634,6 @@ function ss(k, v) {
   return null;
 }
 
-/* ---------- 연출 ---------- */
-
 const GLYPHS = '#%&@$*+=?/<>01ABCDEFXZ▓▒░';
 function scramble(el, text, dur = 700) {
   if (reduced.matches) { el.textContent = text; return; }
@@ -689,8 +673,6 @@ function watchMemo() {
   }, { threshold: 0.6 });
   io.observe(memo);
 }
-
-/* ---------- 라우터 ---------- */
 
 function parseHash() {
   const h = location.hash.replace(/^#/, '') || '/files';
@@ -775,8 +757,6 @@ function showTab(k) {
   watchMemo();
 }
 
-/* ---------- 미행 기록 사진 ---------- */
-
 function showTabKeep() {
   const y = window.scrollY;
   showTab(tab);
@@ -822,9 +802,6 @@ function pickCamImage(i) {
   input.click();
 }
 
-/* ---------- 동작 ---------- */
-
-/* 예시는 늘 최신 1건으로: 예전 예시가 남아 있으면 지우고 새로 넣는다 */
 function putSamples() {
   store.clear({ samplesOnly: true });
   SAMPLES.forEach((s) => {
@@ -1018,8 +995,6 @@ $('#importFile').addEventListener('change', async (e) => {
     toast('백업 파일을 읽지 못했습니다.', 'alert');
   }
 });
-
-/* ---------- 시계 ---------- */
 
 function clock() {
   const el = $('#clock');

@@ -8,7 +8,6 @@ const RULE_TAG = `- 항목 끝에 확인(서사에서 직접 본 사실), 추정
 
 const OUT = '[출력] 역할극 서술 없이 코드블록 하나에 아래 형식 그대로 한 항목 한 줄. 같은 머리말을 줄 수만큼 반복한다.';
 
-/* 답이 잘리지 않도록 3부로 나눠 받는다. 각 답은 같은 보고서에 합쳐진다. */
 export const PARTS = [
   { no: 1, name: '기본 신상', desc: '제목, 결론, 위험도, 신상, 외관, 취향, 관계' },
   { no: 2, name: '관찰 기록', desc: '사건, 미행, 도청, 성격, 성향 점수' },
@@ -87,8 +86,6 @@ export function buildPrompt({ mode = 1, observer = '', subject = '', pc = '', tr
   const idLines = `모드: ${M}\n관찰자: 이름 · 대상과의 관계\n대상: 이름${part === 1 ? '\nPC: 이름' : ''}`;
   return `${head}\n${brief}\n\n[작성 규칙]\n${rules}\n\n${OUT}\n${idLines}\n${FORMATS[part]}`;
 }
-
-/* ---------- parser ---------- */
 
 const KEYS = [
   ['mode', /^모드$/],

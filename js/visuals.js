@@ -1,5 +1,3 @@
-/* 보고서 시각 요소: 위험도 계기판, 관계도, 레이더, CCTV 캡처, 도청, 포스트잇 */
-
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
 export const memoLine = (m, who) => (m ? `<span class="note-memo"><b>✎ ${esc(who)}</b>${esc(m)}</span>` : '');
@@ -11,7 +9,6 @@ function seed(str) {
   return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 1000) / 1000; };
 }
 
-/* 위험도 계기판 */
 export function gauge(v) {
   const n = clamp(v);
   const ang = -90 + (n / 100) * 180;
@@ -34,7 +31,6 @@ export function gauge(v) {
     </svg>`;
 }
 
-/* 관계도: 가운데 대상, 둘레에 관계 인물, 관찰자는 점선으로 지켜본다 */
 export function relationMap(f) {
   const obs = f.observer?.name || 'UNKNOWN';
   const pc = f.pc || 'PC';
@@ -57,7 +53,6 @@ export function relationMap(f) {
   </div>`;
 }
 
-/* 레이더 차트 */
 export function radar(psych) {
   const items = psych.slice(0, 6);
   if (items.length < 3) return '';
@@ -84,7 +79,6 @@ export function radar(psych) {
   </svg></figure>`;
 }
 
-/* CCTV 캡처 */
 export function cctv(notes, body, { imgs = [], editable = false, who = '' } = {}) {
   if (!notes.length) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
   return `<div class="cams">${notes.map((n, i) => {
@@ -111,7 +105,6 @@ export function cctv(notes, body, { imgs = [], editable = false, who = '' } = {}
   }).join('')}</div>`;
 }
 
-/* 도청 기록: 재생을 누르면 파형이 움직이고 대사가 나온다 */
 export function wiretap(list, who = '') {
   if (!list.length) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
   return `<div class="taps">${list.map((t, i) => {
@@ -130,7 +123,6 @@ export function wiretap(list, who = '') {
   }).join('')}</div>`;
 }
 
-/* 관찰자 혼잣말: 관찰자 혼자 쓰는 비공개 대화방 */
 export function chatLog(list, observer, mode) {
   if (!list.length) return '';
   const name = String(observer || '?');
@@ -148,7 +140,6 @@ export function chatLog(list, observer, mode) {
   </div>`;
 }
 
-/* 사건 타임라인 */
 export function timeline(incidents, trigger, who = '') {
   const rows = incidents.map((i, n) => ({ ...i, n: n + 1 }));
   if (!rows.length && !trigger) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
