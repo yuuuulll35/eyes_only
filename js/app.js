@@ -134,7 +134,7 @@ function head(no, title, extra = '') {
 
 function vFiles() {
   const list = store.all();
-  return `${head('EYES ONLY · 보관함', '관찰 보고서 목록',
+  return `${head('EYES ONLY', '관찰 보고서 목록',
     `<p class="vh-line">인물 한 명당 보고서 하나. <b>파일을 눌러 열람하십시오.</b> 같은 인물을 다시 검사하면 그 인물의 보고서가 새 내용으로 바뀝니다.</p>`)}
   <section class="files" aria-label="보고서">
     ${list.map((f) => `<div class="file-wrap">
@@ -206,13 +206,13 @@ function tabOverview(f) {
 
     <div class="readouts" role="list">
       <div class="ro ro-threat" role="listitem">
-        <p class="ro-k">위험도 <span>${josa(S, '이', '가')} ${P}에게 얼마나 위험한 사람인지 · ${O}의 판단</span></p>
+        <p class="ro-k">위험도 <span>${OJ} 판단한, ${josa(S, '이', '가')} ${P}에게 얼마나 위험한지</span></p>
         <p class="ro-n">${f.threat ?? '—'}<small>/100</small><em>${f.threat != null ? threatWord(f.threat) : ''}</em></p>
         ${f.threat != null ? gauge(f.threat) : ''}
         <p class="ro-c">${f.threatWhy ? esc(f.threatWhy) : `${OJ} 판단한 위험 정도`}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">이 보고서의 신빙성 <span>이 기록 내용을 얼마나 믿어도 되는지 · ${O} 스스로 평가</span></p>
+        <p class="ro-k">이 보고서의 신빙성 <span>${OJ} 스스로 매긴, 이 기록을 얼마나 믿어도 되는지</span></p>
         <p class="ro-n">${f.trust ?? '—'}<small>/100</small><em>등급 ${grade(f.trust)}</em></p>
         ${bar(f.trust, 'ro-bar')}
         <p class="ro-c">${f.trustWhy ? esc(f.trustWhy) : `${O}의 자기 평가`}</p>
@@ -221,7 +221,7 @@ function tabOverview(f) {
         <p class="ro-k">직접 확인한 비율 <span>보고서 항목 중 ${OJ} 직접 보고 확인한 내용의 비율</span></p>
         <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>${auditOn ? '판정 반영' : `${OJ} 쓴 그대로`}</em></p>
         <span class="segbar" aria-hidden="true">${seg('fact', shownFact)}${seg('guess', acc.guess)}${auditOn ? seg('error', acc.error) : ''}${seg('unknown', acc.unknown)}</span>
-        <p class="ro-c">확인 ${shownFact} · 추정 ${acc.guess}${auditOn ? ` · 오인 ${acc.error}` : ''} · 미확인 ${acc.unknown}</p>
+        <p class="ro-c">확인 ${shownFact}, 추정 ${acc.guess}${auditOn ? `, 오인 ${acc.error}` : ''}, 미확인 ${acc.unknown}</p>
       </div>
     </div>
 
@@ -233,7 +233,7 @@ function tabOverview(f) {
       </section>` : ''}
     </div>
 
-    ${sec('03', '종합 소견', `${OJ} 내린 공식 결론`, `<p class="verdict">${f.verdict ? esc(f.verdict) : '<span class="nf">DATA NOT FOUND</span>'}</p>`)}
+    ${sec('03', '종합 소견', '', `<p class="verdict">${f.verdict ? esc(f.verdict) : '<span class="nf">DATA NOT FOUND</span>'}</p>`)}
     ${f.comment ? `<section class="memo"><p class="memo-h">// 보고서 끝에 남긴 ${esc(obsName(f))}의 사적인 한마디</p><p class="memo-t" data-type>${esc(f.comment)}</p></section>` : ''}`;
 }
 
@@ -241,17 +241,17 @@ function tabDossier(f) {
   const O = esc(obsName(f));
   return `
     ${sec('01', '기본 신상', '', entList(f.profile, (p) => p.label))}
-    ${sec('02', '인간관계도', `가운데가 ${esc(f.subject)} · 점선은 ${O}의 시선`, `${relationMap(f)}${entList(f.relations, (r) => r.who)}`)}
-    ${sec('03', '외모와 특징', '알아볼 수 있는 표시', entList(f.look))}
-    ${sec('04', '좋아하는 것 · 싫어하는 것', '', `<div class="two">
+    ${sec('02', '인간관계도', '', `${relationMap(f)}${entList(f.relations, (r) => r.who)}`)}
+    ${sec('03', '외모와 특징', '', entList(f.look))}
+    ${sec('04', '좋아하는 것과 싫어하는 것', '', `<div class="two">
       <div><p class="mini">+ 좋아하는 것</p>${entList(f.likes)}</div>
       <div><p class="mini">− 싫어하는 것</p>${entList(f.dislikes)}</div></div>`)}`;
 }
 
 function tabNotes(f) {
   return `
-    ${sec('01', '미행 기록', '몰래 지켜본 장면', cctv(f.notes, body, { imgs: f.camImgs || [], editable: openId !== 'shared', who }))}
-    ${sec('02', '도청 기록', '▶를 누르면 재생', wiretap(f.intercepts, who))}`;
+    ${sec('01', '미행 기록', '', cctv(f.notes, body, { imgs: f.camImgs || [], editable: openId !== 'shared', who }))}
+    ${sec('02', '도청 기록', '', wiretap(f.intercepts, who))}`;
 }
 
 function tabPsych(f) {
@@ -260,21 +260,21 @@ function tabPsych(f) {
   const S = esc(f.subject);
   const r = radar(f.psych);
   return `
-    ${sec('01', '첫인상', `${OJ} ${josa(S, '을', '를')} 처음 봤을 때`, f.first ? `<p class="impression">${esc(f.first)}</p>` : NODATA)}
-    ${sec('02', '성향 점수', `${OJ} 매긴 점수 · 0~100`, f.psych.length
+    ${sec('01', '첫인상', '', f.first ? `<p class="impression">${esc(f.first)}</p>` : NODATA)}
+    ${sec('02', '성향 점수', '', f.psych.length
       ? `<div class="psy-wrap">${r}<ul class="psy wide">${f.psych.map((p) => `<li><span>${esc(p.k)}</span>${bar(p.v)}<b>${p.v}</b>${p.why ? `<small>${esc(p.why)}</small>` : ''}${p.memo ? `<small class="psy-memo">${memoLine(p.memo, who)}</small>` : ''}</li>`).join('')}</ul></div>`
       : NODATA)}
     ${sec('03', '성격과 행동 습관', '', entList(f.traits))}
-    ${sec('04', '그래서 어떤 사람인가', `${OJ} 보는 ${S}`, f.person ? `<p class="impression final">${esc(f.person)}</p>` : NODATA)}`;
+    ${sec('04', '그래서 어떤 사람인가', '', f.person ? `<p class="impression final">${esc(f.person)}</p>` : NODATA)}`;
 }
 
 function tabClassified(f) {
   const O = esc(obsName(f));
   const raw = (f.sealed || []).map((x) => (typeof x === 'string' ? x : [x.name, x.why].filter(Boolean).join(' · ')));
   return `
-    ${sec('01', `${O}의 속마음`, '공식 기록에서 지운 메모 · 눌러서 보기', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}
-    ${raw.length ? sec('02', '열람 불가', `윤리·도덕·상식의 필터를 거치지 않은 ${O}의 날것의 생각 · 세 번 눌러야 열림`, `<div class="vault" data-n="0">
-      <p class="vault-h"><b>ACCESS DENIED</b><span>열람 불가 · 승인 <i>0</i>/3</span></p>
+    ${sec('01', `${O}의 속마음`, '', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}
+    ${raw.length ? sec('02', '열람 불가', `윤리, 도덕, 상식의 필터를 거치지 않은 ${O}의 날것의 생각. 세 번 눌러야 열림`, `<div class="vault" data-n="0">
+      <p class="vault-h"><b>ACCESS DENIED</b><span>승인 <i>0</i>/3</span></p>
       <div class="vault-body" hidden>${raw.map((t) => `<p class="vault-t" data-text="${esc(t)}"></p>`).join('')}</div>
       <button class="btn vault-btn" type="button" data-act="vault">열람 요청</button>
     </div>`, 'sec-lock') : ''}`;
@@ -282,7 +282,7 @@ function tabClassified(f) {
 
 function tabIncidents(f, external) {
   return `
-    ${sec('01', '사건 타임라인', '오래된 일부터 순서대로', timeline(f.incidents, f.trigger, who))}`;
+    ${sec('01', '사건 타임라인', '', timeline(f.incidents, f.trigger, who))}`;
 }
 
 const TAB_VIEW = { overview: tabOverview, dossier: tabDossier, field_notes: tabNotes, psychological: tabPsych, classified: tabClassified, incident_log: tabIncidents };
@@ -338,7 +338,7 @@ function vFile(f, { external = false } = {}) {
         <p class="d-brief">${brief}</p>
         <p class="d-ctx">${O}: ${esc(f.observer?.rel || '신분 미상')}</p>
       </div>
-      <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>대외비 · 열람 주의</span></div>
+      <div class="stamp" aria-hidden="true"><b>EYES ONLY</b><span>대외비</span></div>
     </header>
 
     ${!canJudge(f) ? `<div class="judge">
@@ -348,13 +348,13 @@ function vFile(f, { external = false } = {}) {
       </div>
       ${external ? '' : `<a class="btn solid" href="#/intake?mode=2&npc=${encodeURIComponent(obsName(f))}&pc=${encodeURIComponent(f.pc || '')}&from=${encodeURIComponent(f.id)}">사실 여부 판정하기 →</a>`}
     </div>` : acc.error ? `<div class="d-controls">
-      <p class="sw-c">${audit ? `${OJ} 잘못 알고 쓴 내용 ${acc.error}건 바로잡는 중` : `판정 완료 · ${OJ} 잘못 알고 쓴 내용 ${acc.error}건`}</p>
+      <p class="sw-c">${audit ? `${OJ} 잘못 알고 쓴 내용 ${acc.error}건 바로잡는 중` : `판정 완료. ${OJ} 잘못 알고 쓴 내용 ${acc.error}건`}</p>
       <label class="toggle">
         <span class="tg-l">오해 바로잡기</span>
         <input type="checkbox" role="switch" class="tg-in" data-toggle="audit"${audit ? ' checked' : ''}>
         <span class="tg-track" aria-hidden="true"><i></i></span>
       </label>
-    </div>` : (f.mode === 1 ? '<div class="d-controls"><p class="sw-c">판정 완료 · 잘못 안 내용 없음</p></div>' : '')}
+    </div>` : (f.mode === 1 ? '<div class="d-controls"><p class="sw-c">판정 완료. 잘못 안 내용 없음</p></div>' : '')}
     <span class="tabs-anchor" aria-hidden="true"></span>
     <nav class="tabs" role="tablist" aria-label="보고서 항목">
       ${TABS.map(([tk, tt], n) => {
@@ -427,7 +427,7 @@ function vIntake(q, { first = false } = {}) {
   const m = draft.mode;
   const openOpt = wantTrig || !!(draft.pc || draft.trigger);
   const opt = `<details class="opt"${openOpt ? ' open' : ''}>
-        <summary>추가 설정 <em>선택 · PC 이름, 계기 사건</em></summary>
+        <summary>추가 설정 <em>PC 이름, 계기 사건</em></summary>
         <div class="fields">
           <label class="fld"><span>PC 이름 <em>비우면 PC</em></span><input name="pc" maxlength="20" value="${esc(draft.pc)}" placeholder="예: 윤해리"></label>
           <label class="fld"><span>계기 사건 <em>특정 사건 이후의 보고서로</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
@@ -452,7 +452,7 @@ function vIntake(q, { first = false } = {}) {
           <span class="mc-desc">${MODES[k].desc}</span>
         </label>`).join('')}
       </div>
-      ${m === 2 && draft.npc2 ? `<p class="linked"><span>감시 대상 <b>${esc(draft.npc2)}</b> · ${esc(draft.npc2)}의 경계 기록이 사실인지 판정하기 위한 기록</span><button class="chip-btn" type="button" data-act="unlink">연결 해제</button></p>` : ''}
+      ${m === 2 && draft.npc2 ? `<p class="linked"><span>감시 대상 <b>${esc(draft.npc2)}</b> (${esc(draft.npc2)}의 경계 기록에서 이어짐)</span><button class="chip-btn" type="button" data-act="unlink">연결 해제</button></p>` : ''}
       ${m === 2 ? opt : ''}
     </section>
     ${m === 1 ? `<section class="step">
@@ -801,7 +801,7 @@ document.addEventListener('click', async (e) => {
     }
     v.classList.add('open');
     $('.vault-h b', v).textContent = 'ACCESS GRANTED';
-    $('.vault-h span', v).textContent = '열람 승인 · 3/3';
+    $('.vault-h span', v).textContent = '승인 3/3';
     const body = $('.vault-body', v);
     body.hidden = false;
     [...body.querySelectorAll('.vault-t')].forEach((p, k) => setTimeout(() => scramble(p, p.dataset.text, 900), k * 500));

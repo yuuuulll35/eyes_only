@@ -39,7 +39,7 @@ export function relationMap(f) {
   const obs = f.observer?.name || 'UNKNOWN';
   const pc = f.pc || 'PC';
   const nodes = f.relations.slice(0, 5).map((r) => ({ who: r.who, text: r.text, st: r.st, real: r.real, pc: r.who === pc, obs: r.who === obs }));
-  if (!nodes.some((n) => n.obs)) nodes.push({ who: obs, text: f.mode === 2 ? '정체 미상 · 몰래 지켜보는 중' : '이 기록을 쓴 사람', obs: true, extra: true });
+  if (!nodes.some((n) => n.obs)) nodes.push({ who: obs, text: f.mode === 2 ? '정체 미상, 몰래 지켜보는 중' : '이 기록을 쓴 사람', obs: true, extra: true });
   const N = nodes.length;
   const pos = nodes.map((_, i) => {
     const a = (-90 + (360 / N) * i + (N % 2 ? 0 : 180 / N)) * Math.PI / 180;
@@ -138,13 +138,13 @@ export function chatLog(list, observer, mode) {
   return `<div class="chat">
     <div class="chat-head">
       <span class="chat-av" aria-hidden="true">${esc(initial)}</span>
-      <span class="chat-who"><b>${esc(name)}</b><span>나에게 보내는 메모 · 비공개</span></span>
+      <span class="chat-who"><b>${esc(name)}</b><span>나에게 보내는 메모</span></span>
     </div>
     <ol class="chat-body">
       ${list.slice(0, 5).map((t, i) => `<li class="bubble" style="--d:${(i * 0.45).toFixed(2)}s">${esc(t)}</li>`).join('')}
       <li class="bubble typing" style="--d:${(Math.min(list.length, 5) * 0.45).toFixed(2)}s" aria-label="입력 중"><i></i><i></i><i></i></li>
     </ol>
-    <p class="chat-input" aria-hidden="true"><span>열람 전용 · 메시지 전송 불가</span><b>전송</b></p>
+    <p class="chat-input" aria-hidden="true"><span>메시지 전송 불가</span><b>전송</b></p>
   </div>`;
 }
 
