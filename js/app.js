@@ -625,9 +625,7 @@ function showTab(k) {
   tmp.innerHTML = vFile(f, { external: ext });
   art.replaceWith(tmp.firstElementChild);
   const tabs = $('.tabs', view);
-  const barH = $('.bar')?.offsetHeight || 56;
-  const top = tabs.getBoundingClientRect().top + window.scrollY - barH - 8;
-  if (window.scrollY > top) window.scrollTo(0, top);
+  window.scrollTo(0, 0);
   const cur = $('.tab[aria-selected="true"]', view);
   if (cur) { tabs.scrollLeft = cur.offsetLeft - (tabs.clientWidth - cur.offsetWidth) / 2; cur.focus({ preventScroll: true }); }
   watchMemo();
