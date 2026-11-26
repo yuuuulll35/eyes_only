@@ -429,8 +429,8 @@ function vIntake(q, { first = false } = {}) {
   const opt = `<details class="opt"${openOpt ? ' open' : ''}>
         <summary>추가 설정 <em>PC 이름, 계기 사건</em></summary>
         <div class="fields">
-          <label class="fld"><span>PC 이름 <em>비우면 PC</em></span><input name="pc" maxlength="20" value="${esc(draft.pc)}" placeholder="예: 윤해리"></label>
-          <label class="fld"><span>계기 사건 <em>특정 사건 이후의 보고서로</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="예: 정전의 밤"${wantTrig ? ' data-focus' : ''}></label>
+          <label class="fld"><span>PC 이름 <em>비우면 PC</em></span><input name="pc" maxlength="20" value="${esc(draft.pc)}" placeholder="PC 이름"></label>
+          <label class="fld"><span>계기 사건 <em>특정 사건 이후의 보고서로</em></span><input name="trigger" maxlength="30" value="${esc(draft.trigger)}" placeholder="계기가 된 사건"${wantTrig ? ' data-focus' : ''}></label>
         </div>
       </details>`;
   const top = first
@@ -458,9 +458,9 @@ function vIntake(q, { first = false } = {}) {
     ${m === 1 ? `<section class="step">
       <h2 class="sh"><span class="sh-no">02</span><span class="sh-ko big">누가 누구를 관찰할까</span></h2>
       <div class="picks">
-        ${pickRow({ key: 'observer', pickKey: 'obsPick', label: '지켜보는 NPC', autoLabel: '임의', autoDesc: '등장 NPC 중 PC 곁을 가장 경계할 만한 인물을 AI가 고릅니다.', ph: '예: 차도현' })}
+        ${pickRow({ key: 'observer', pickKey: 'obsPick', label: '지켜보는 NPC', autoLabel: '임의', autoDesc: '등장 NPC 중 PC 곁을 가장 경계할 만한 인물을 AI가 고릅니다.', ph: '지켜보는 NPC 이름' })}
         <span class="pick-arrow" aria-hidden="true">──▶</span>
-        ${pickRow({ key: 'subject', pickKey: 'subPick', label: '관찰 대상 (PC 곁의 인물)', autoLabel: '임의 생성', autoDesc: 'PC 곁의 인물 중 한 명을 AI가 고르고, 마땅한 인물이 없으면 새로 만듭니다.', ph: '예: 강지안' })}
+        ${pickRow({ key: 'subject', pickKey: 'subPick', label: '관찰 대상 (PC 곁의 인물)', autoLabel: '임의 생성', autoDesc: 'PC 곁의 인물 중 한 명을 AI가 고르고, 마땅한 인물이 없으면 새로 만듭니다.', ph: '관찰할 인물 이름' })}
       </div>
       ${opt}
     </section>` : ''}
@@ -474,7 +474,7 @@ function vIntake(q, { first = false } = {}) {
         <button class="btn solid" type="button" data-act="pasteclip">답 붙여넣기</button>
       </div>
       <div class="manual" id="manual"${draft.answer ? '' : ' hidden'}>
-        <textarea name="answer" id="answer" rows="8" spellcheck="false" placeholder="모드: 01&#10;관찰자: 이름 · 대상과의 관계&#10;대상: 이름&#10;…" aria-label="채팅에서 받은 답">${esc(draft.answer)}</textarea>
+        <textarea name="answer" id="answer" rows="8" spellcheck="false" placeholder="채팅에서 받은 답을 여기에 붙여 넣기" aria-label="채팅에서 받은 답">${esc(draft.answer)}</textarea>
         <div class="row-acts left">
           <button class="btn solid" type="submit">보고서 만들기</button>
           <button class="chip-btn" type="button" data-act="clearans">지우기</button>
