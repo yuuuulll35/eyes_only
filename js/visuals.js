@@ -2,6 +2,7 @@
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
+export const memoLine = (m, who) => (m ? `<span class="note-memo"><b>✎ ${esc(who)}</b>${esc(m)}</span>` : '');
 const short = (s, n) => { const a = [...String(s || '')]; return a.length > n ? a.slice(0, n).join('') + '…' : a.join(''); };
 
 function seed(str) {
@@ -84,22 +85,34 @@ export function radar(psych) {
 }
 
 /* CCTV 캡처 */
-export function cctv(notes, body) {
+export function cctv(notes, body, { imgs = [], editable = false, who = '' } = {}) {
   if (!notes.length) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
-  return `<div class="cams">${notes.map((n, i) => `<figure class="cam">
-    <div class="cam-screen">
+  return `<div class="cams">${notes.map((n, i) => {
+    const img = imgs[i];
+    const screen = `
+      ${img ? `<img class="cam-img" src="${img}" alt="${esc(n.where || '장소 미상')} 사진">
+      <span class="crt-fx" aria-hidden="true"></span>` : ''}
       <span class="cam-id">CAM ${String(i + 1).padStart(2, '0')}</span>
       <span class="cam-rec">● REC</span>
-      <span class="cam-loc">${esc(n.where || '장소 미상')}</span>
+      ${img ? '' : `<span class="cam-loc">${esc(n.where || '장소 미상')}</span><span class="cam-cross" aria-hidden="true"></span>`}
       <span class="cam-time">${esc(n.when || '--:--')}</span>
-      <span class="cam-cross" aria-hidden="true"></span>
-    </div>
-    <figcaption>${body(n.text, n.st)}</figcaption>
-  </figure>`).join('')}</div>`;
+      ${editable && !img ? '<span class="cam-add">+ 사진 넣기</span>' : ''}`;
+    return `<figure class="cam${img ? ' has-img' : ''}">
+    ${editable && !img
+      ? `<button class="cam-screen" type="button" data-act="camimg" data-i="${i}" aria-label="CAM ${i + 1} 화면에 사진 넣기">${screen}</button>`
+      : `<div class="cam-screen">${screen}</div>`}
+    <figcaption>
+      ${img ? `<span class="cam-where">${esc(n.where || '장소 미상')}</span>` : ''}
+      <span class="cam-text">${body(n.text, n.st)}</span>
+      ${memoLine(n.memo, who)}
+      ${editable && img ? `<span class="cam-tools"><button type="button" data-act="camimg" data-i="${i}">사진 바꾸기</button><button type="button" data-act="camdel" data-i="${i}">지우기</button></span>` : ''}
+    </figcaption>
+  </figure>`;
+  }).join('')}</div>`;
 }
 
 /* 도청 기록: 재생을 누르면 파형이 움직이고 대사가 나온다 */
-export function wiretap(list) {
+export function wiretap(list, who = '') {
   if (!list.length) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
   return `<div class="taps">${list.map((t, i) => {
     const r = seed(t.said);
@@ -112,6 +125,7 @@ export function wiretap(list) {
         <div class="wave" aria-hidden="true">${bars}</div>
       </div>
       <p class="tap-q" data-said="${esc(t.said)}"><span class="tap-hidden">▶를 누르면 엿들은 말이 나옵니다</span></p>
+      ${memoLine(t.memo, who)}
     </div>`;
   }).join('')}</div>`;
 }
@@ -135,11 +149,11 @@ export function chatLog(list, observer, mode) {
 }
 
 /* 사건 타임라인 */
-export function timeline(incidents, trigger) {
+export function timeline(incidents, trigger, who = '') {
   const rows = incidents.map((i, n) => ({ ...i, n: n + 1 }));
   if (!rows.length && !trigger) return '<p class="nodata">DATA NOT FOUND <small>기록 없음</small></p>';
   return `<ol class="tline">
-    ${rows.map((i) => `<li class="${trigger && i.name.includes(trigger) ? 'is-trig' : ''}"><span class="tl-n">사건 ${String(i.n).padStart(2, '0')}</span><b>${esc(i.name)}</b><p>${esc(i.text)}</p></li>`).join('')}
+    ${rows.map((i) => `<li class="${trigger && i.name.includes(trigger) ? 'is-trig' : ''}"><span class="tl-n">사건 ${String(i.n).padStart(2, '0')}</span><b>${esc(i.name)}</b><p>${esc(i.text)}</p>${memoLine(i.memo, who)}</li>`).join('')}
     ${trigger ? `<li class="is-now"><span class="tl-n">지금</span><b>「${esc(trigger)}」 이후 이 보고서 작성</b><p>이 사건을 계기로 새로 쓴 기록입니다.</p></li>` : ''}
   </ol>`;
 }

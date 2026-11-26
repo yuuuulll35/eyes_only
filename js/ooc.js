@@ -5,6 +5,7 @@ const RULES = `[작성 규칙]
 - 관찰자의 성격·경계심·편견이 평가에 묻어나게 쓴다.
 - 항목 끝에 확인(서사에서 직접 본 사실), 추정(관찰자의 해석), 오인(관찰자가 잘못 안 것) 중 하나를 붙인다. 오인은 '실제: 사실'을 덧붙이고 1~2개 넣는다.
 - 설정과 서사에 없는 정보는 지어내지 않고 DATA NOT FOUND로 쓴다. PC의 대사와 속마음은 지어내지 않는다.
+- 항목 절반쯤은 끝에 '· 메모: 관찰자 말투의 혼잣말 20자 이내'를 붙인다.
 - 한 항목은 50자 이내. 표로 만들지 않는다.`;
 
 const FORMAT = `[출력] 역할극 서술 없이 코드블록 하나에 아래 형식 그대로 한 항목 한 줄. 같은 머리말을 줄 수만큼 반복한다.
@@ -12,9 +13,9 @@ const FORMAT = `[출력] 역할극 서술 없이 코드블록 하나에 아래 �
 관찰자: 이름 · 대상과의 관계
 대상: 이름
 PC: 이름
-제목: 보고서 제목 20자 이내
-판정: 관찰자 말투의 한 줄 판정 30자 이내
-위험도: 0~100 · 관찰자가 본 위험 근거
+제목: 20자 이내
+판정: 관찰자 말투의 한 줄 결론 30자
+위험도: 0~100 · 근거
 신상: 항목 · 내용 · 확인 (4줄)
 외관: 식별 특징 · 확인 (3줄)
 성격: 행동 양식 · 추정 (3줄)
@@ -24,10 +25,13 @@ PC: 이름
 관찰: 일시 · 장소 · 관찰 기록 (3줄)
 도청: "대상이 서사에서 실제로 한 말" · 상황 (2줄)
 사건: 사건명 · 경위와 결과 (2줄)
+첫인상: 처음 봤을 때의 인상 1문장
 심리: 성향 2~6자 · 0~100 · 근거 (4줄)
+인물평: 그래서 어떤 인간이라고 보는지 1~2문장
 소견: 종합 소견 2문장
 신뢰도: 0~100 · 근거
-열람 제한: 공식 기록에서 뺀 사적인 기록 (2줄)
+열람 제한: 공식 기록에서 뺀 속마음 (2줄)
+봉인: 윤리·도덕·상식 필터 없이 튀어나온 관찰자의 날것의 속생각. 노골적 성적·폭력 묘사 제외 (2줄)
 코멘트: 관찰자의 개인 코멘트 1~2문장
 낙서: 관찰자가 여백에 갈겨쓴 혼잣말 20자 이내 (3줄)`;
 
@@ -50,18 +54,19 @@ const tidyName = (s) => String(s || '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2
 export function buildPrompt({ mode = 1, observer = '', subject = '', pc = '', trigger = '' } = {}) {
   const ob = tidyName(observer);
   const sb = tidyName(subject);
-  const P = tidyName(pc) || 'PC';
+  const pn = tidyName(pc);
+  const P1 = pn ? `PC(${pn})` : 'PC';
   const tr = tidyName(trigger);
   let brief;
   if (mode === 2) {
     const n = sb || 'NPC';
-    brief = `정체불명의 제3자가 ${josa(n, '을', '를')} 지켜보며 쓴 기밀 조사 보고서를 만든다. ${josa(n, '은', '는')} ${P} 주변을 감시하듯 맴돌며 ${P} 곁의 인물들을 살피는 중이다. 관찰자는 정체를 밝히지 않고 코드명만 쓴다. ${n}의 감시 동선과 행동 패턴, ${josa(P, '과', '와')} 그 주변 인물을 대하는 태도, 그렇게까지 하는 이유를 추적하고 추측한다.`;
+    brief = `정체불명의 제3자가 ${josa(n, '을', '를')} 지켜보며 쓴 기밀 조사 보고서를 만든다. ${josa(n, '은', '는')} ${P1} 주변을 감시하듯 맴돌며 PC 곁의 인물들을 살피는 중이다. 관찰자는 정체를 밝히지 않고 코드명만 쓴다. ${n}의 감시 동선과 행동 패턴, PC와 그 주변 인물을 대하는 태도, 그렇게까지 하는 이유를 추적하고 추측한다.`;
   } else {
     const o = ob || 'NPC';
     const t = sb || '인물 한 명';
-    brief = `${josa(o, '이', '가')} ${P} 곁에 있는 ${josa(t, '을', '를')} 경계하며 몰래 관찰해 쓴 기밀 조사 보고서를 만든다. ${o}에게 대상은 ${P}에게 다가오는 잠재적 위협이다. 대상이 ${P}에게 어떤 존재인지, ${P}와의 거리·접촉·의도를 의심하는 눈으로 기록하고, ${o}의 경계심과 질투, 오해가 평가에 묻어난다.`;
-    if (!ob) brief += ` 관찰자 NPC는 등장하는 NPC 중 한 명을 임의로 고른다. 여럿이면 ${P} 곁을 가장 경계할 만한 인물로 한다.`;
-    if (!sb) brief += ` 대상은 ${P} 곁의 인물 중 관찰자가 아닌 한 명을 임의로 고른다. 마땅한 인물이 없으면 세계관에 맞는 성인 인물을 새로 만들고, 신상 첫 줄에 '구분 · 임의 생성 인물 · 확인'을 쓴다.`;
+    brief = `${josa(o, '이', '가')} ${P1} 곁에 있는 ${josa(t, '을', '를')} 경계하며 몰래 관찰해 쓴 기밀 조사 보고서를 만든다. ${o}에게 대상은 PC에게 다가오는 잠재적 위협이다. 대상이 PC에게 어떤 존재인지, PC와의 거리·접촉·의도를 의심하는 눈으로 기록하고, ${o}의 경계심과 질투, 오해가 평가에 묻어난다.`;
+    if (!ob) brief += ' 관찰자는 등장 NPC 중 PC 곁을 가장 경계할 만한 한 명을 고른다.';
+    if (!sb) brief += " 대상은 PC 곁의 인물 중 관찰자가 아닌 한 명을 고르고, 없으면 세계관에 맞는 성인 인물을 새로 만들어 신상 첫 줄에 '구분 · 임의 생성 인물 · 확인'을 쓴다.";
   }
   if (tr) brief += ` 이 보고서는 '${tr}' 이후 새로 추가된 기록이다.`;
   return `${HEAD}\n${brief}\n\n${RULES}\n\n${FORMAT.replace('{MODE}', mode === 2 ? '02' : '01')}`;
@@ -75,6 +80,8 @@ const KEYS = [
   ['subject', /^(?:대상|조사\s*대상|관찰\s*대상)$/],
   ['pc', /^(?:PC|보호\s*대상|감시\s*범위)$/i],
   ['threat', /^(?:위험도|위협도|경계\s*등급)$/],
+  ['first', /^첫\s*인상$/],
+  ['person', /^(?:인물평|인물\s*평가)$/],
   ['headline', /^(?:판정|한\s*줄\s*판정)$/],
   ['intercepts', /^(?:도청|감청)$/],
   ['scribbles', /^(?:낙서|여백)$/],
@@ -166,7 +173,7 @@ export function parse(text) {
     mode: 0, observer: { name: '', rel: '' }, subject: '', pc: '', threat: null, threatWhy: '', title: '',
     profile: [], look: [], traits: [], likes: [], dislikes: [], relations: [],
     notes: [], incidents: [], psych: [], verdict: '', trust: null, trustWhy: '',
-    restricted: [], sealed: [], comment: '', headline: '', intercepts: [], scribbles: [],
+    restricted: [], sealed: [], comment: '', first: '', person: '', headline: '', intercepts: [], scribbles: [],
   };
   let hits = 0;
 
@@ -175,7 +182,10 @@ export function parse(text) {
     const m = line.match(/^\[?([^:：\]]{1,12})\]?\s*[:：]\s*(.*)$/);
     if (!m) continue;
     const label = m[1].trim();
-    const value = m[2].trim();
+    let value = m[2].trim();
+    let memo = '';
+    const mm = value.match(/\s*[·•∙|]\s*메모\s*[:：]\s*(.+)$/);
+    if (mm) { memo = clip(clean(mm[1]), 40); value = value.slice(0, mm.index).trim(); }
     const key = (KEYS.find(([, re]) => re.test(label)) || [])[0];
     if (!key || !value) continue;
     hits++;
@@ -195,6 +205,8 @@ export function parse(text) {
         f.threatWhy = clip(p.slice(1).join(' · '), L);
         break;
       }
+      case 'first': f.first = clip([f.first, clean(value)].filter(Boolean).join(' '), 120); break;
+      case 'person': f.person = clip([f.person, clean(value)].filter(Boolean).join(' '), 160); break;
       case 'headline': f.headline = clip(clean(value), 40); break;
       case 'intercepts': {
         const q = value.match(/^["“'‘「『](.+?)["”'’」』]\s*(?:[·•∙|,:\-–—]\s*)?(.*)$/);
@@ -252,11 +264,13 @@ export function parse(text) {
       case 'restricted': f.restricted.push(clip(clean(value), 120)); break;
       case 'sealed': {
         const p = value.split(SEP).map(clean).filter(Boolean);
-        f.sealed.push({ name: clip(p[0], 24), why: clip(p.slice(1).join(' · '), 60) });
+        f.sealed.push(clip(p.join(' '), 140));
         break;
       }
       case 'comment': f.comment = clip([f.comment, clean(value)].filter(Boolean).join(' '), LIMITS.comment); break;
     }
+    const arr = f[key];
+    if (memo && Array.isArray(arr) && arr.length && typeof arr[arr.length - 1] === 'object') arr[arr.length - 1].memo = memo;
   }
 
   if (hits < 3) return { error: '기록 형식을 찾지 못했습니다. "관찰자: …", "신상: …"처럼 머리말이 있는 답인지 확인해 주세요.' };

@@ -993,3 +993,56 @@ body[data-view="intake"] .new-btn, body[data-view="first"] .new-btn { display: n
 .tg-in:checked + .tg-track i { transform: translateX(20px); background: var(--amber); }
 .tg-in:focus-visible + .tg-track { outline: 2px solid var(--ink); outline-offset: 2px; }
 .toggle:hover .tg-track { border-color: var(--ink); }
+
+/* =========================================================
+   미행 기록 사진 · 브라운관 효과
+   ========================================================= */
+.svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+button.cam-screen { width: 100%; padding: 0; border: 0; cursor: pointer; font: inherit; color: inherit; }
+button.cam-screen:hover .cam-add, button.cam-screen:focus-visible .cam-add { background: var(--ink); color: var(--bg); text-shadow: none; }
+.cam-add { position: absolute; z-index: 2; left: 50%; bottom: 34px; transform: translateX(-50%); padding: 4px 12px; border: 1px dashed rgba(232, 242, 236, .6); font-size: 13px; font-weight: 700; color: #e8f2ec; white-space: nowrap; background: rgba(0, 0, 0, .45); transition: background .15s, color .15s; }
+
+.cam.has-img .cam-screen { border-radius: 14px / 11px; box-shadow: inset 0 0 0 1px rgba(232, 242, 236, .12); background: #050806; }
+.cam.has-img .cam-screen::after { z-index: 1; }
+.cam-img { position: absolute; inset: -2%; width: 104%; height: 104%; object-fit: cover; filter: url(#crt-rgb) contrast(1.18) saturate(.75) brightness(.92) blur(.25px); animation: crt-flicker 4s steps(1) infinite; }
+.crt-fx { position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+  background:
+    linear-gradient(180deg, transparent 0 40%, rgba(255, 255, 255, .07) 48%, transparent 56%) 0 0 / 100% 220%,
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, .32) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 110% at 50% 50%, transparent 55%, rgba(0, 0, 0, .75) 100%),
+    linear-gradient(rgba(60, 120, 90, .12), rgba(60, 120, 90, .12));
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, .8), inset 0 0 4px rgba(157, 255, 201, .25);
+  animation: crt-roll 6s linear infinite; }
+@keyframes crt-roll { from { background-position: 0 -120%, 0 0, 0 0, 0 0; } to { background-position: 0 120%, 0 0, 0 0, 0 0; } }
+@keyframes crt-flicker { 0%, 100% { opacity: 1; } 47% { opacity: .92; } 48% { opacity: 1; } 83% { opacity: .95; transform: translateX(.6px); } 84% { transform: none; } }
+.cam.has-img .cam-id, .cam.has-img .cam-rec, .cam.has-img .cam-time { z-index: 2; }
+.cam figcaption { display: flex; flex-direction: column; gap: 4px; }
+.cam-where { font-size: 12.5px; color: var(--dim); }
+.cam-tools { display: flex; gap: 14px; margin-top: 4px; }
+.cam-tools button { font-size: 12.5px; color: var(--ink2); text-decoration: underline; text-underline-offset: 3px; min-height: 28px; }
+.cam-tools button:hover { color: var(--ink); }
+.cam-tools button + button { color: var(--red); }
+@media (prefers-reduced-motion: reduce) { .cam-img, .crt-fx { animation: none; } }
+
+/* 항목별 NPC 메모 */
+.note-memo { display: block; margin-top: 4px; font-size: 13.5px; line-height: 1.5; color: #ffd796; text-shadow: 0 0 5px rgba(255, 198, 110, .25); }
+.note-memo b { font-weight: 700; color: var(--amber); margin-right: 6px; }
+.psy-memo { color: inherit; }
+.tline .note-memo, .tap .note-memo, .cam .note-memo { margin-top: 6px; }
+
+/* 열람 불가: 세 번 눌러야 열림 */
+.vault { position: relative; padding: 16px; border: 1px solid var(--red); background: repeating-linear-gradient(135deg, rgba(255, 97, 87, .07) 0 10px, transparent 10px 20px); display: flex; flex-direction: column; gap: 12px; }
+.vault-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.vault-h b { font-family: var(--px); font-weight: 400; font-size: 30px; line-height: 1; letter-spacing: .06em; color: var(--red); text-shadow: 0 0 8px rgba(255, 97, 87, .5); animation: soft 1.8s ease-in-out infinite; }
+.vault-h span { font-size: 13px; color: var(--dim); }
+.vault-h i { font-style: normal; color: var(--red); font-weight: 700; }
+.vault-btn { align-self: flex-end; border-color: var(--red); color: var(--red); text-shadow: 0 0 6px rgba(255, 97, 87, .35); }
+.vault-btn:hover { background: rgba(255, 97, 87, .12); border-color: var(--red); }
+.vault.open { background: rgba(255, 97, 87, .06); }
+.vault.open .vault-h b { animation: none; }
+.vault-body { display: flex; flex-direction: column; gap: 10px; }
+.vault-t { margin: 0; padding: 10px 12px; border-left: 3px solid var(--red); background: rgba(0, 0, 0, .35); font-size: 16px; line-height: 1.7; color: #ffd2cc; text-shadow: 0 0 6px rgba(255, 97, 87, .3); }
+.impression { margin: 0; padding: 4px 0 4px 14px; border-left: 2px solid var(--ink2); font-size: 16.5px; line-height: 1.75; }
+.impression.final { border-left-color: var(--amber); color: #ffe2b0; text-shadow: 0 0 5px rgba(255, 198, 110, .25); font-weight: 700; }
+.psy .note-memo { margin-top: 0; }
+.psy .note-memo b { font-family: var(--kr); font-size: 13.5px; font-weight: 700; text-align: left; color: var(--amber); }

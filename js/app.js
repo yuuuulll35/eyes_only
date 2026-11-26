@@ -2,7 +2,7 @@ import { buildPrompt, parse, MODES, josa } from './ooc.js';
 import { SAMPLES, SAMPLE_VER } from './data.js';
 import * as store from './store.js';
 import { glyph } from './glyph.js';
-import { gauge, relationMap, radar, cctv, wiretap, chatLog, timeline } from './visuals.js';
+import { gauge, relationMap, radar, cctv, wiretap, chatLog, timeline, memoLine } from './visuals.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -14,15 +14,16 @@ let audit = store.pref.get('audit') === '1';
 let shared = null;
 let tab = 'incident_log';
 let openId = '';
+let who = '';
 
 /* 보고서 안의 탭. 순서대로 읽도록 다음 버튼으로 이어진다 */
 const TABS = [
-  ['incident_log', '사건 일지', (o, t) => `먼저 무슨 일이 있었는지 봅니다. 이 일들 때문에 ${o}의 관찰이 시작됐습니다.`],
-  ['dossier', '신상 정보', (o, t) => `${josa(o, '이', '가')} 알아낸 ${t}의 신상과 인간관계입니다.`],
-  ['field_notes', '미행·도청', (o, t) => `${josa(o, '이', '가')} 몰래 지켜본 ${t}의 모습과 엿들은 말입니다.`],
-  ['psychological', '성격 분석', (o, t) => `${josa(o, '이', '가')} 판단한 ${t}의 성향과 습관입니다.`],
-  ['classified', '숨긴 기록', (o) => `공식 보고서에서 지운 ${o}의 속마음입니다.`],
-  ['overview', '최종 정리', (o, t) => `지금까지의 기록을 바탕으로 ${josa(o, '이', '가')} 내린 ${t}에 대한 결론과 위험도입니다.`],
+  ['incident_log', '사건 일지', (o) => `이 일들 때문에 ${o}의 관찰이 시작됐습니다.`],
+  ['dossier', '신상 정보', (o, t) => `${josa(o, '이', '가')} 알아낸 ${t}의 신상과 인간관계 정보`],
+  ['field_notes', '미행·도청', (o, t) => `${josa(o, '이', '가')} 몰래 지켜본 ${t}의 모습과 엿들은 말`],
+  ['psychological', '성격 분석', (o, t) => `${josa(o, '이', '가')} 분석 및 판단한 ${t}의 성향과 습관입니다.`],
+  ['classified', '숨긴 기록', (o) => `공식 보고서에서 지운 ${o}의 속마음`],
+  ['overview', '최종 정리', () => ''],
 ];
 
 const ST = {
@@ -82,7 +83,7 @@ function entry(item, label = '') {
   const errOn = item.st === 'error' && audit;
   return `<li class="ent${errOn ? ' is-err' : ''}${item.st === 'guess' ? ' is-guess' : ''}">
     ${label ? `<span class="ent-k">${esc(label)}</span>` : ''}
-    <span class="ent-v"><span class="ent-t">${body(item.text, item.st)}</span>${errOn && item.real ? `<span class="ent-fix"><b>실제로는</b> ${esc(item.real)}</span>` : ''}</span>
+    <span class="ent-v"><span class="ent-t">${body(item.text, item.st)}</span>${errOn && item.real ? `<span class="ent-fix"><b>실제로는</b> ${esc(item.real)}</span>` : ''}${memoLine(item.memo, who)}</span>
     ${stTag(item.st)}
   </li>`;
 }
@@ -186,6 +187,8 @@ const notesLog = (notes) => (notes.length
 function tabOverview(f) {
   const O = esc(obsName(f));
   const OJ = josa(O, '이', '가');
+  const S = esc(f.subject);
+  const P = esc(pcName(f));
   const acc = accuracy(f);
   const tot = Math.max(1, acc.total);
   const seg = (k, n) => `<i class="seg-${k}" style="--w:${(n / tot) * 100}%"></i>`;
@@ -198,19 +201,19 @@ function tabOverview(f) {
 
     <div class="readouts" role="list">
       <div class="ro ro-threat" role="listitem">
-        <p class="ro-k">위험도 <span>${OJ} 본 위험 정도</span></p>
+        <p class="ro-k">위험도 <span>${josa(S, '이', '가')} ${P}에게 얼마나 위험한 사람인지 · ${O}의 판단</span></p>
         <p class="ro-n">${f.threat ?? '—'}<small>/100</small><em>${f.threat != null ? threatWord(f.threat) : ''}</em></p>
         ${f.threat != null ? gauge(f.threat) : ''}
         <p class="ro-c">${f.threatWhy ? esc(f.threatWhy) : `${OJ} 판단한 위험 정도`}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">믿을 만한 정도 <span>${OJ} 스스로 매긴 점수</span></p>
+        <p class="ro-k">이 보고서의 신빙성 <span>이 기록 내용을 얼마나 믿어도 되는지 · ${O} 스스로 평가</span></p>
         <p class="ro-n">${f.trust ?? '—'}<small>/100</small><em>등급 ${grade(f.trust)}</em></p>
         ${bar(f.trust, 'ro-bar')}
         <p class="ro-c">${f.trustWhy ? esc(f.trustWhy) : `${O}의 자기 평가`}</p>
       </div>
       <div class="ro" role="listitem">
-        <p class="ro-k">사실과 맞는 정도 <span>직접 확인된 내용의 비율</span></p>
+        <p class="ro-k">직접 확인한 비율 <span>보고서 항목 중 ${OJ} 직접 보고 확인한 내용의 비율</span></p>
         <p class="ro-n">${acc.pct ?? '—'}<small>%</small><em>검수 결과</em></p>
         <span class="segbar" aria-hidden="true">${seg('fact', shownFact)}${seg('guess', acc.guess)}${audit ? seg('error', acc.error) : ''}${seg('unknown', acc.unknown)}</span>
         <p class="ro-c">확인 ${shownFact} · 추정 ${acc.guess}${audit ? ` · 오인 ${acc.error}` : ''} · 미확인 ${acc.unknown}</p>
@@ -242,29 +245,39 @@ function tabDossier(f) {
 
 function tabNotes(f) {
   return `
-    ${sec('01', '미행 기록', '몰래 지켜본 장면', cctv(f.notes, body))}
-    ${sec('02', '도청 기록', '▶를 누르면 엿들은 말이 재생됩니다', wiretap(f.intercepts))}`;
+    ${sec('01', '미행 기록', '몰래 지켜본 장면', cctv(f.notes, body, { imgs: f.camImgs || [], editable: openId !== 'shared', who }))}
+    ${sec('02', '도청 기록', '▶를 누르면 엿들은 말이 재생됩니다', wiretap(f.intercepts, who))}`;
 }
 
 function tabPsych(f) {
-  const OJ = josa(esc(obsName(f)), '이', '가');
+  const O = esc(obsName(f));
+  const OJ = josa(O, '이', '가');
+  const S = esc(f.subject);
   const r = radar(f.psych);
   return `
-    ${sec('01', '성향 점수', `${OJ} 매긴 점수 · 0~100`, f.psych.length
-      ? `<div class="psy-wrap">${r}<ul class="psy wide">${f.psych.map((p) => `<li><span>${esc(p.k)}</span>${bar(p.v)}<b>${p.v}</b>${p.why ? `<small>${esc(p.why)}</small>` : ''}</li>`).join('')}</ul></div>`
+    ${sec('01', '첫인상', `${OJ} ${josa(S, '을', '를')} 처음 봤을 때`, f.first ? `<p class="impression">${esc(f.first)}</p>` : NODATA)}
+    ${sec('02', '성향 점수', `${OJ} 매긴 점수 · 0~100`, f.psych.length
+      ? `<div class="psy-wrap">${r}<ul class="psy wide">${f.psych.map((p) => `<li><span>${esc(p.k)}</span>${bar(p.v)}<b>${p.v}</b>${p.why ? `<small>${esc(p.why)}</small>` : ''}${p.memo ? `<small class="psy-memo">${memoLine(p.memo, who)}</small>` : ''}</li>`).join('')}</ul></div>`
       : NODATA)}
-    ${sec('02', '성격과 행동 습관', '', entList(f.traits))}`;
+    ${sec('03', '성격과 행동 습관', '', entList(f.traits))}
+    ${sec('04', '그래서 어떤 사람인가', `${OJ} 보는 ${S}`, f.person ? `<p class="impression final">${esc(f.person)}</p>` : NODATA)}`;
 }
 
 function tabClassified(f) {
   const O = esc(obsName(f));
+  const raw = (f.sealed || []).map((x) => (typeof x === 'string' ? x : [x.name, x.why].filter(Boolean).join(' · ')));
   return `
-    ${sec('01', `${O}의 속마음`, '공식 기록에서 지운 메모 · 눌러서 보기', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}`;
+    ${sec('01', `${O}의 속마음`, '공식 기록에서 지운 메모 · 눌러서 보기', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}
+    ${raw.length ? sec('02', '열람 불가', `윤리·도덕·상식의 필터를 거치지 않은 ${O}의 날것의 생각입니다. 세 번 눌러야 열립니다.`, `<div class="vault" data-n="0">
+      <p class="vault-h"><b>ACCESS DENIED</b><span>열람 불가 · 승인 <i>0</i>/3</span></p>
+      <div class="vault-body" hidden>${raw.map((t) => `<p class="vault-t" data-text="${esc(t)}"></p>`).join('')}</div>
+      <button class="btn vault-btn" type="button" data-act="vault">열람 요청</button>
+    </div>`, 'sec-lock') : ''}`;
 }
 
 function tabIncidents(f, external) {
   return `
-    ${sec('01', '사건 타임라인', '오래된 일부터 순서대로', timeline(f.incidents, f.trigger))}`;
+    ${sec('01', '사건 타임라인', '오래된 일부터 순서대로', timeline(f.incidents, f.trigger, who))}`;
 }
 
 const TAB_VIEW = { overview: tabOverview, dossier: tabDossier, field_notes: tabNotes, psychological: tabPsych, classified: tabClassified, incident_log: tabIncidents };
@@ -274,7 +287,7 @@ function tabCount(f, k) {
     dossier: f.profile.length + f.look.length + f.traits.length + f.likes.length + f.dislikes.length + f.relations.length,
     field_notes: f.notes.length + (f.intercepts?.length || 0),
     psychological: f.psych.length,
-    classified: f.restricted.length,
+    classified: f.restricted.length + (f.sealed?.length || 0),
     incident_log: f.incidents.length,
   }[k];
 }
@@ -282,6 +295,7 @@ function tabCount(f, k) {
 function vFile(f, { external = false } = {}) {
   if (f) { f.intercepts ||= []; f.scribbles ||= []; }
   if (!f) return head('보고서', '보고서를 찾을 수 없습니다') + '<p class="nodata big">DATA NOT FOUND</p><div class="row-acts"><a class="btn" href="#/files">← 보고서 목록</a></div>';
+  who = obsName(f);
   const i = Math.max(0, TABS.findIndex(([k]) => k === tab));
   const [k, title, descFn] = TABS[i];
   const O = esc(obsName(f));
@@ -328,7 +342,7 @@ function vFile(f, { external = false } = {}) {
       <div class="th-main">
         <p class="tab-step">${i + 1} / ${TABS.length}</p>
         <h2 class="tab-title">${title}</h2>
-        <p class="tab-desc">${desc}</p>
+        ${desc ? `<p class="tab-desc">${desc}</p>` : ''}
       </div>
     </div>
     ${k === 'dossier' || k === 'psychological' ? `<dl class="legend-line" aria-label="표시 안내">
@@ -645,6 +659,53 @@ function showTab(k) {
   watchMemo();
 }
 
+/* ---------- 미행 기록 사진 ---------- */
+
+function showTabKeep() {
+  const y = window.scrollY;
+  showTab(tab);
+  window.scrollTo(0, y);
+}
+
+async function shrinkImage(file, max = 960) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k);
+    c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.72);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function pickCamImage(i) {
+  const f = store.byId(openId);
+  if (!f) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('사진 파일만 넣을 수 있습니다.', 'alert'); return; }
+    try {
+      const data = await shrinkImage(file);
+      const imgs = [...(f.camImgs || [])];
+      imgs[i] = data;
+      if (!store.patch(f.id, { camImgs: imgs })) { toast('저장 공간이 부족해 사진을 넣지 못했습니다. 다른 사진을 지워 보세요.', 'alert'); return; }
+      showTabKeep();
+      toast(`CAM ${String(i + 1).padStart(2, '0')} 화면에 사진을 넣었습니다.`);
+    } catch {
+      toast('사진을 읽지 못했습니다.', 'alert');
+    }
+  });
+  input.click();
+}
+
 /* ---------- 동작 ---------- */
 
 /* 예시는 늘 최신 1건으로: 예전 예시가 남아 있으면 지우고 새로 넣는다 */
@@ -691,6 +752,34 @@ document.addEventListener('click', async (e) => {
       else { tap.classList.remove('playing'); b.textContent = '▶'; }
     };
     step();
+  } else if (act === 'vault') {
+    const v = b.closest('.vault');
+    const n = Math.min(3, Number(v.dataset.n) + 1);
+    v.dataset.n = String(n);
+    $('.vault-h i', v).textContent = String(n);
+    v.classList.remove('shake');
+    void v.offsetWidth;
+    if (n < 3) {
+      v.classList.add('shake');
+      b.textContent = n === 1 ? '한 번 더 요청' : '마지막 요청';
+      return;
+    }
+    v.classList.add('open');
+    $('.vault-h b', v).textContent = 'ACCESS GRANTED';
+    $('.vault-h span', v).textContent = '열람 승인 · 3/3';
+    const body = $('.vault-body', v);
+    body.hidden = false;
+    [...body.querySelectorAll('.vault-t')].forEach((p, k) => setTimeout(() => scramble(p, p.dataset.text, 900), k * 500));
+    b.remove();
+  } else if (act === 'camimg') {
+    pickCamImage(Number(b.dataset.i));
+  } else if (act === 'camdel') {
+    const f = store.byId(openId);
+    if (!f) return;
+    const imgs = [...(f.camImgs || [])];
+    imgs[Number(b.dataset.i)] = null;
+    store.patch(f.id, { camImgs: imgs });
+    showTabKeep();
   } else if (act === 'reveal') {
     const box = b.closest('.redact');
     const t = $('.redact-t', box);

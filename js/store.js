@@ -27,7 +27,20 @@ export function load() {
 }
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(files)); persistent = true; } catch { persistent = false; }
+  try { localStorage.setItem(KEY, JSON.stringify(files)); persistent = true; return true; } catch { persistent = false; return false; }
+}
+
+/* 보고서 일부를 고친다. 저장 공간이 모자라면 되돌리고 false */
+export function patch(id, data) {
+  const f = files.find((x) => x.id === id);
+  if (!f) return false;
+  const before = {};
+  Object.keys(data).forEach((k) => { before[k] = f[k]; });
+  Object.assign(f, data);
+  if (save()) return true;
+  Object.assign(f, before);
+  save();
+  return false;
 }
 
 export const isPersistent = () => persistent;
@@ -105,7 +118,7 @@ const unb64u = (s) => {
 };
 
 export async function pack(file) {
-  const { id, sample, ...rest } = file;
+  const { id, sample, camImgs, ...rest } = file;
   const raw = new TextEncoder().encode(JSON.stringify(rest));
   if (canZip) {
     const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
