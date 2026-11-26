@@ -273,7 +273,7 @@ function tabClassified(f) {
   const raw = (f.sealed || []).map((x) => (typeof x === 'string' ? x : [x.name, x.why].filter(Boolean).join(' · ')));
   return `
     ${sec('01', `${O}의 속마음`, '', f.restricted.length ? f.restricted.map((r, i) => redacted(r, `${f.id}-${i}`)).join('') : NODATA, 'sec-lock')}
-    ${raw.length ? sec('02', '열람 불가', `윤리, 도덕, 상식의 필터를 거치지 않은 ${O}의 날것의 생각. 세 번 눌러야 열림`, `<div class="vault" data-n="0">
+    ${raw.length ? sec('02', '열람 불가', `윤리, 도덕, 상식의 필터를 거치지 않은 ${O}의 날것의 생각`, `<div class="vault" data-n="0">
       <p class="vault-h"><b>ACCESS DENIED</b><span>승인 <i>0</i>/3</span></p>
       <div class="vault-body" hidden>${raw.map((t) => `<p class="vault-t" data-text="${esc(t)}"></p>`).join('')}</div>
       <button class="btn vault-btn" type="button" data-act="vault">열람 요청</button>
